@@ -4,7 +4,7 @@ import cats.mtl.ApplicativeAsk
 import shapeless.Lens
 import cats.syntax.all._
 
-object LensedAsk {
+object AskOptics {
   class Applicative[F[_], E, A](
     parent: ApplicativeAsk[F, E],
     lens: Lens[E, A]
