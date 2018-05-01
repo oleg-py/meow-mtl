@@ -1,8 +1,8 @@
-package com.olegpy.meow
+package com.olegpy.meow.internal
 
 import cats.mtl.ApplicativeAsk
-import shapeless.Lens
 import cats.syntax.all._
+import shapeless.Lens
 
 object AskOptics {
   class Applicative[F[_], E, A](

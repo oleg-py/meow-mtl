@@ -1,6 +1,6 @@
 package com.olegpy.meow.optics
 
-abstract class TIso[S, A] {
+abstract class TIso[S, A] { self =>
   def from(a: S): A
   def to(b: A): S
 

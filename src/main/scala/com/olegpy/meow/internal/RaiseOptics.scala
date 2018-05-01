@@ -1,11 +1,11 @@
-package com.olegpy.meow
+package com.olegpy.meow.internal
 
-import cats.{ApplicativeError, MonadError}
 import cats.mtl.FunctorRaise
+import cats.{ApplicativeError, MonadError}
 import com.olegpy.meow.optics.TPrism
 
 
-object RaiseOptics {
+private[meow] object RaiseOptics {
   class Functor[F[_], S, E](
     parent: FunctorRaise[F, S],
     prism: TPrism[S, E]

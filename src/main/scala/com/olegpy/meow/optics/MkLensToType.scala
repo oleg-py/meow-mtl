@@ -6,14 +6,14 @@ class MkLensToType[S, A](lens: Lens[S, A]) {
   def apply(): Lens[S, A] = lens
 }
 
-trait AutoLensLP0 {
+private[meow] trait AutoLensLP0 {
   implicit def hlistElem[L <: HList, A](implicit
     mkHListSelectLens: MkHListSelectLens[L, A]
   ): MkLensToType[L, A] =
     new MkLensToType(mkHListSelectLens())
 }
 
-trait AutoLensLP1 extends AutoLensLP0 {
+private[meow] trait AutoLensLP1 extends AutoLensLP0 {
   implicit def deriveInstance[A, L, S](implicit
     gen: MkGenericLens.Aux[A, L],
     ll: Lazy[MkLensToType[L, S]]
@@ -21,7 +21,7 @@ trait AutoLensLP1 extends AutoLensLP0 {
     new MkLensToType(ll.value() compose gen())
 }
 
-trait AutoLensLP2 extends AutoLensLP1 {
+private[meow] trait AutoLensLP2 extends AutoLensLP1 {
   implicit def deriveTail[H, T <: HList, A](implicit
     ll: Lazy[MkLensToType[T, A]]
   ): MkLensToType[H :: T, A] =
@@ -33,7 +33,7 @@ trait AutoLensLP2 extends AutoLensLP1 {
     })
 }
 
-trait AutoLensLP3 extends AutoLensLP2 {
+private[meow] trait AutoLensLP3 extends AutoLensLP2 {
   implicit def deriveHead[H, T <: HList, A](
     implicit
     ll: Lazy[MkLensToType[H, A]]): MkLensToType[H :: T, A] =

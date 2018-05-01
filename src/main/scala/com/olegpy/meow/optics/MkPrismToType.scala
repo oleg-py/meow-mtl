@@ -8,7 +8,7 @@ class MkPrismToType[S, A](prism: TPrism[S, A]) {
   def apply(): TPrism[S, A] = prism
 }
 
-trait AutoPrismLP0 {
+private[meow] trait AutoPrismLP0 {
   implicit def fromIso[S, A](implicit mkIso: MkIsoToType[S, A]): MkPrismToType[S, A] =
     new MkPrismToType(mkIso().toPrism)
 
@@ -22,7 +22,7 @@ trait AutoPrismLP0 {
     })
 }
 
-trait AutoPrismLP1 extends AutoPrismLP0 {
+private[meow] trait AutoPrismLP1 extends AutoPrismLP0 {
   implicit def deriveInstance[A, L <: Coproduct, S](
     implicit
     gen: Generic.Aux[A, L],
@@ -35,7 +35,7 @@ trait AutoPrismLP1 extends AutoPrismLP0 {
   }
 }
 
-trait AutoPrismLP2 extends AutoPrismLP1 {
+private[meow] trait AutoPrismLP2 extends AutoPrismLP1 {
   implicit def deriveTail[H, T <: Coproduct, A](
     implicit ll: Lazy[MkPrismToType[T, A]]
   ): MkPrismToType[H :+: T, A] = {
@@ -50,7 +50,7 @@ trait AutoPrismLP2 extends AutoPrismLP1 {
   }
 }
 
-trait AutoPrismLP3 extends AutoPrismLP2 {
+private[meow] trait AutoPrismLP3 extends AutoPrismLP2 {
   implicit def deriveHead[H, T <: Coproduct, A](
     implicit
     ll: Lazy[MkPrismToType[H, A]]

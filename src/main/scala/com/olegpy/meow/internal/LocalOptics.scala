@@ -1,10 +1,10 @@
-package com.olegpy.meow
+package com.olegpy.meow.internal
 
 import cats.mtl.{ApplicativeAsk, ApplicativeLocal, DefaultApplicativeLocal}
 import shapeless.Lens
 
 
-object LocalOptics {
+private[meow] object LocalOptics {
   class Applicative[F[_], E, A](
     parent: ApplicativeLocal[F, E],
     lens: Lens[E, A]

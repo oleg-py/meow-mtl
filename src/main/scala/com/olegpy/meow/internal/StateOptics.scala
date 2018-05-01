@@ -1,10 +1,10 @@
-package com.olegpy.meow
+package com.olegpy.meow.internal
 
 import cats.mtl.MonadState
-import shapeless.Lens
 import cats.syntax.all._
+import shapeless.Lens
 
-object StateOptics {
+private[meow] object StateOptics {
   class Monad[F[_], S, A](parent: MonadState[F, S], lens: Lens[S, A])
     extends MonadState[F, A] {
     implicit val monad: cats.Monad[F] = parent.monad
