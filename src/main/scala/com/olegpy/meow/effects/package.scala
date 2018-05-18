@@ -1,13 +1,13 @@
 package com.olegpy.meow
 
-import cats.{Applicative, Monad}
 import cats.effect.concurrent.Ref
 import cats.kernel.Monoid
 import cats.mtl._
+import cats.{Applicative, Monad}
 import com.olegpy.meow.internal.RefInstances._
 
-object ref {
-  implicit class RefEffectSyntax[F[_], A](val self: Ref[F, A]) extends AnyVal {
+package object effects {
+  implicit class RefEffects[F[_], A](val self: Ref[F, A]) extends AnyVal {
     /**
      * Execute a stateful operation using this `Ref` to store / update state.
      * The Ref will be modified to contain the resulting value. Returning value

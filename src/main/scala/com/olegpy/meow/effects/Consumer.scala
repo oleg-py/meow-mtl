@@ -1,4 +1,4 @@
-package com.olegpy.meow
+package com.olegpy.meow.effects
 
 import cats.Functor
 import cats.mtl.{DefaultFunctorTell, FunctorTell}
