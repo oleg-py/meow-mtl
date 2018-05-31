@@ -1,10 +1,9 @@
 package com.olegpy.meow
 
-import cats.effect.concurrent.Ref
-import cats.kernel.Monoid
+import cats.effect.concurrent.{Deferred, Ref}
 import cats.mtl._
-import cats.{Applicative, Monad}
-import com.olegpy.meow.internal.RefInstances._
+import cats.{Applicative, Monad, Semigroup}
+import com.olegpy.meow.internal.CatsEffectMtlInstances._
 
 package object effects {
   implicit class RefEffects[F[_], A](val self: Ref[F, A]) extends AnyVal {
@@ -12,7 +11,6 @@ package object effects {
      * Execute a stateful operation using this `Ref` to store / update state.
      * The Ref will be modified to contain the resulting value. Returning value
      * would be a result of function passed to [[runState]].
-     *
      *
      * {{{
      *    def getAndIncrement[F[_]: Apply](implicit MS: MonadState[F, Int]) =
@@ -44,7 +42,12 @@ package object effects {
     def runAsk[B](f: ApplicativeAsk[F, A] => B)(implicit F: Applicative[F]): B =
       f(new RefApplicativeAsk(self))
 
-    def runListen[B](f: FunctorListen[F, A] => B)(implicit F: Applicative[F], A: Monoid[A]): B =
+    def runListen[B](f: FunctorListen[F, A] => B)(implicit F: Applicative[F], A: Semigroup[A]): B =
       f(new RefFunctorListen(self))
+  }
+
+  implicit class DeferredEffects[F[_], A](val self: Deferred[F, A]) extends AnyVal {
+    def runAsk[B](f: ApplicativeAsk[F, A] => B)(implicit F: Applicative[F]): B =
+      f(new DeferredApplicativeAsk(self))
   }
 }

@@ -8,6 +8,31 @@ import cats.mtl.{DefaultFunctorTell, FunctorTell}
  * A wrapper for effectful function `A => F[Unit]`
  */
 final class Consumer[F[_], A] private (val consume: A => F[Unit]) extends AnyVal {
+  /**
+   * Execute an operation that can "log" values of type `A` using this [[Consumer]]
+   *
+   * N.B.: unlike most FunctorTell instances, this one does not require
+   * any constraints on `A`
+   *
+   * As an example, a simple async logger that only blocks if a previous message is
+   * still being processed, to ensure correct ordering:
+   *
+   * {{{
+   *   def greeter(name: String)(implicit ev: FunctorTell[IO, String]): IO[Unit] =
+   *     ev.tell(s"Hello, $name") >> IO.sleep(1.second) >> greeter(name)
+   *
+   *   def forever[A](ioa: IO[A]): IO[Nothing] = ioa >> forever(ioa)
+   *
+   *   for {
+   *      mVar <- MVar.empty[IO, String]
+   *      logger = forever(mVar.take.flatMap(s => IO(println(s)))
+   *      _ <- logger.start // Do logging in background
+   *      _ <- Consumer(mVar.put).runTell { implicit tell =>
+   *        greeter("Oleg")
+   *      }
+   *   } yield ()
+   * }}}
+   */
   def runTell[B](f: FunctorTell[F, A] => B)(implicit F: Functor[F]): B =
     f(new Consumer.TellInstance(this))
 }
@@ -19,7 +44,6 @@ object Consumer {
   def apply[F[_], A](f: A => F[Unit]): Consumer[F, A] = new Consumer(f)
 
 
-  // TODO - check if it works as implicit conversion
   private class TellInstance[F[_]: Functor, A](c: Consumer[F, A])
     extends FunctorTell[F, A]
       with DefaultFunctorTell[F, A] {
