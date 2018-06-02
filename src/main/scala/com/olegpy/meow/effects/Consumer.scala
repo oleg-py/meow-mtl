@@ -19,7 +19,7 @@ final class Consumer[F[_], A] private (val consume: A => F[Unit]) extends AnyVal
    *
    * {{{
    *   def greeter(name: String)(implicit ev: FunctorTell[IO, String]): IO[Unit] =
-   *     ev.tell(s"Hello, $name") >> IO.sleep(1.second) >> greeter(name)
+   *     ev.tell(s"Long time no see, $name") >> IO.sleep(1.second)
    *
    *   def forever[A](ioa: IO[A]): IO[Nothing] = ioa >> forever(ioa)
    *
@@ -28,7 +28,7 @@ final class Consumer[F[_], A] private (val consume: A => F[Unit]) extends AnyVal
    *      logger = forever(mVar.take.flatMap(s => IO(println(s)))
    *      _ <- logger.start // Do logging in background
    *      _ <- Consumer(mVar.put).runTell { implicit tell =>
-   *        greeter("Oleg")
+   *        forever(greeter("Oleg"))
    *      }
    *   } yield ()
    * }}}

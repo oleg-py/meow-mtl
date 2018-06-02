@@ -1,8 +1,8 @@
 package com.olegpy.meow
 
-import cats.effect.concurrent.{Deferred, Ref}
+import cats.effect.concurrent.Ref
 import cats.mtl._
-import cats.{Applicative, Monad, Semigroup}
+import cats.{Applicative, Apply, Monad, Semigroup}
 import com.olegpy.meow.internal.CatsEffectMtlInstances._
 
 package object effects {
@@ -15,6 +15,7 @@ package object effects {
      * {{{
      *    def getAndIncrement[F[_]: Apply](implicit MS: MonadState[F, Int]) =
      *      MS.get <* MS.modify(_ + 1)
+     *
      *
      *    for {
      *      ref <- Ref.of[IO](0)
@@ -36,18 +37,39 @@ package object effects {
      * in which case reads will see the updated value.
      *
      * {{{
-     *   // TODO: example
+     *   case class RequestId(text: String)
+     *
+     *   def greet[F[_]: Sync: ApplicativeAsk[?[_], RequestId]](name: String): F[String] =
+     *     for {
+     *       rId <- ApplicativeAsk.askF[F]()
+     *       _   <- Sync[F].delay(println(s"Handling request $rId"))
+     *     } yield s"Hello, $name"
+     *
+     *
+     *   for {
+     *     id  <- IO(UUID.randomUUID().toString).map(RequestId)
+     *     ref <- Ref[IO].of(id)
+     *     res <- ref.runAsk { implicit aa =>
+     *       greet("Oleg")
+     *     }
+     *   } yield res
      * }}}
      */
     def runAsk[B](f: ApplicativeAsk[F, A] => B)(implicit F: Applicative[F]): B =
       f(new RefApplicativeAsk(self))
 
-    def runListen[B](f: FunctorListen[F, A] => B)(implicit F: Applicative[F], A: Semigroup[A]): B =
+    /**
+     * Execute an operation requiring ability to "log" values of type `A`, and,
+     * potentially, read current value.
+     *
+     * The operation requires `A` to have a `Semigroup` instance. Unlike standard
+     * `Writer` monad, initial (zero) is not required.
+     *
+     * {{{
+     *   // TODO: example
+     * }}}
+     */
+    def runListen[B](f: FunctorListen[F, A] => B)(implicit F: Apply[F], A: Semigroup[A]): B =
       f(new RefFunctorListen(self))
-  }
-
-  implicit class DeferredEffects[F[_], A](val self: Deferred[F, A]) extends AnyVal {
-    def runAsk[B](f: ApplicativeAsk[F, A] => B)(implicit F: Applicative[F]): B =
-      f(new DeferredApplicativeAsk(self))
   }
 }

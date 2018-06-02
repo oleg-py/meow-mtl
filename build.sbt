@@ -25,7 +25,7 @@ lazy val meowMtl = crossProject
     libraryDependencies ++= Seq(
       "com.chuusai"   %%% "shapeless"     % "2.3.3",
       "org.typelevel" %%% "cats-mtl-core" % "0.2.3",
-      "org.typelevel" %%% "cats-effect" % "0.10-fe61a3b",
+      "org.typelevel" %%% "cats-effect"   % "1.0.0-RC2-d7181dc",
       "io.monix"      %%% "minitest"      % "2.1.1" % Test,
     ),
 
