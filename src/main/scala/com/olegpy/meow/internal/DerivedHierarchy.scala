@@ -1,7 +1,7 @@
 package com.olegpy.meow.internal
 
 import cats.mtl._
-import cats.mtl.hierarchy.BaseHierarchy
+import cats.mtl.hierarchy.{base => conv}
 import cats.{ApplicativeError, MonadError}
 import com.olegpy.meow.optics.{MkLensToType, MkPrismToType}
 import shapeless.=:!=
@@ -28,6 +28,12 @@ private[meow] object DerivedHierarchy {
   }
 
   trait Priority1 extends Priority2 {
+    implicit def askFromState[F[_], L](implicit ev: MonadState[F, L]): ApplicativeAsk[F, L] =
+      conv.askFromState[F, L]
+
+    implicit def tellFromState[F[_], L](implicit ev: MonadState[F, L]): FunctorTell[F, L] =
+      conv.tellFromState[F, L]
+
     implicit def deriveApplicativeLocal[F[_], S, A](implicit
       isAbstractF: IsAbstract[F],
       parent: ApplicativeLocal[F, S],
@@ -47,7 +53,17 @@ private[meow] object DerivedHierarchy {
 
   }
 
-  trait Priority2 extends BaseHierarchy {
+  trait Priority2 {
+    implicit final def functorEmptyFromTraverseEmpty[F[_]](implicit F: TraverseEmpty[F]): FunctorEmpty[F] =
+      conv.functorEmptyFromTraverseEmpty(F)
+
+    implicit final def askFromLocal[F[_], E](implicit local: ApplicativeLocal[F, E]): ApplicativeAsk[F, E] =
+      conv.askFromLocal(local)
+
+    implicit final def tellFromListen[F[_], L](implicit listen: FunctorListen[F, L]): FunctorTell[F, L] =
+      conv.tellFromListen(listen)
+
+
     implicit def deriveApplicativeAsk[F[_], S, A](implicit
       isAbstractF: IsAbstract[F],
       parent: ApplicativeAsk[F, S],
