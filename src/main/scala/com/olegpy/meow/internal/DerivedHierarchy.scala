@@ -25,6 +25,14 @@ private[meow] object DerivedHierarchy {
       mkPrismToType: MkPrismToType[S, A],
     ): MonadError[F, A] =
       new RaiseOptics.Monad(parent, mkPrismToType())
+
+    implicit def deriveFunctorTell[F[_], S, A](implicit
+      isAbstractF: IsAbstract[F],
+      parent: FunctorTell[F, S],
+      neq: S =:!= A,
+      mkPrismToType: MkPrismToType[S, A],
+    ): FunctorTell[F, A] =
+      new TellOptics.Functor(parent, mkPrismToType())
   }
 
   trait Priority1 extends Priority2 {

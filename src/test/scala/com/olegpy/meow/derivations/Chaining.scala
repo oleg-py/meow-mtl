@@ -51,6 +51,12 @@ object Chaining {
     ()
   }
 
+  def testStateToTell[F[_]](implicit ev: MonadState[F, State]): Unit = {
+    implicitly[FunctorTell[F, State]]
+    implicitly[FunctorTell[F, Int]]
+    ()
+  }
+
   case class DbError(text: String)
   sealed trait NetworkError
 
@@ -80,6 +86,16 @@ object Chaining {
 
   def testFunctorRaise[F[_]](implicit ev: FunctorRaise[F, AppError]): Unit = {
     def derives[S](implicit ev: FunctorRaise[F, S]): Unit = ()
+
+    derives[ADbError]
+    derives[DbError]
+    derives[ANetworkError]
+    derives[NetworkError]
+    derives[String]
+  }
+
+  def testFunctorTell[F[_]](implicit ev: FunctorTell[F, AppError]): Unit = {
+    def derives[S](implicit ev: FunctorTell[F, S]): Unit = ()
 
     derives[ADbError]
     derives[DbError]
