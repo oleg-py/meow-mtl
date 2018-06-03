@@ -1,5 +1,6 @@
 package com.olegpy.meow.optics
 
+import com.olegpy.meow.internal.CoGeneric
 import shapeless._
 import shapeless.ops.coproduct.{Inject, Selector}
 
@@ -9,9 +10,6 @@ class MkPrismToType[S, A](prism: TPrism[S, A]) {
 }
 
 private[meow] trait AutoPrismLP0 {
-  implicit def fromIso[S, A](implicit mkIso: MkIsoToType[S, A]): MkPrismToType[S, A] =
-    new MkPrismToType(mkIso().toPrism)
-
   implicit def coproductElem[L <: Coproduct, A](
     implicit sel: Selector[L, A],
     inj: Inject[L, A]
@@ -25,7 +23,7 @@ private[meow] trait AutoPrismLP0 {
 private[meow] trait AutoPrismLP1 extends AutoPrismLP0 {
   implicit def deriveInstance[A, L <: Coproduct, S](
     implicit
-    gen: Generic.Aux[A, L],
+    gen: CoGeneric.Aux[A, L],
     ll: Lazy[MkPrismToType[L, S]]): MkPrismToType[A, S] = {
     new MkPrismToType(new TPrism[A, S] {
       private[this] val prism = ll.value()
@@ -52,8 +50,7 @@ private[meow] trait AutoPrismLP2 extends AutoPrismLP1 {
 
 private[meow] trait AutoPrismLP3 extends AutoPrismLP2 {
   implicit def deriveHead[H, T <: Coproduct, A](
-    implicit
-    ll: Lazy[MkPrismToType[H, A]]
+    implicit ll: Lazy[MkPrismToType[H, A]]
   ): MkPrismToType[H :+: T, A] = {
     new MkPrismToType(new TPrism[H :+: T, A] {
       private[this] val prism = ll.value()
@@ -66,7 +63,7 @@ private[meow] trait AutoPrismLP3 extends AutoPrismLP2 {
   }
 }
 
-object MkPrismToType extends AutoPrismLP3 {
+trait AutoPrismLP4 extends AutoPrismLP3 {
   implicit def subtyping[A, B <: A](implicit
     notCoproduct: B <:!< Coproduct,
     typeable: Typeable[B]
@@ -76,4 +73,12 @@ object MkPrismToType extends AutoPrismLP3 {
       def unapply(s: A): Option[B] = typeable.cast(s)
     })
   }
+}
+
+object MkPrismToType extends AutoPrismLP4 {
+  implicit def refl[A]: MkPrismToType[A, A] =
+    new MkPrismToType(new TPrism[A, A] {
+      def apply(a: A): A = a
+      def unapply(s: A): Option[A] = Some(s)
+    })
 }

@@ -1,7 +1,6 @@
 package com.olegpy.meow.optics
 
 import minitest._
-import shapeless.test.illTyped
 
 object PrismDerivation extends SimpleTestSuite {
   sealed trait ADT
@@ -17,10 +16,12 @@ object PrismDerivation extends SimpleTestSuite {
 
   test("Derives for first level") {
     assert(prizm[ADT, Value.type].unapply(Value) contains Value)
+    val nested = Nested(Left("Foo"))
+    assert(prizm[ADT, Nested].unapply(nested) contains nested)
   }
 
   test("Can go inside values") {
     assert(prizm[ADT, Long].unapply(Plain(42)) contains 42)
-    illTyped("""prizm[ADT, String]""") // TODO
+    assert(prizm[ADT, String].unapply(Nested(Left("Foo"))) contains "Foo")
   }
 }

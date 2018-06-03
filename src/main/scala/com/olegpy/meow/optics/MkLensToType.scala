@@ -7,8 +7,8 @@ class MkLensToType[S, A](lens: Lens[S, A]) {
 }
 
 private[meow] trait AutoLensLP0 {
-  implicit def hlistElem[L <: HList, A](implicit
-    mkHListSelectLens: MkHListSelectLens[L, A]
+  implicit def hlistElem[L <: HList, A](
+    implicit mkHListSelectLens: MkHListSelectLens[L, A]
   ): MkLensToType[L, A] =
     new MkLensToType(mkHListSelectLens())
 }
@@ -22,8 +22,8 @@ private[meow] trait AutoLensLP1 extends AutoLensLP0 {
 }
 
 private[meow] trait AutoLensLP2 extends AutoLensLP1 {
-  implicit def deriveTail[H, T <: HList, A](implicit
-    ll: Lazy[MkLensToType[T, A]]
+  implicit def deriveTail[H, T <: HList, A](
+    implicit ll: Lazy[MkLensToType[T, A]]
   ): MkLensToType[H :: T, A] =
     new MkLensToType(new Lens[H :: T, A] {
       private[this] val tlz = ll.value()
@@ -35,8 +35,8 @@ private[meow] trait AutoLensLP2 extends AutoLensLP1 {
 
 private[meow] trait AutoLensLP3 extends AutoLensLP2 {
   implicit def deriveHead[H, T <: HList, A](
-    implicit
-    ll: Lazy[MkLensToType[H, A]]): MkLensToType[H :: T, A] =
+    implicit ll: Lazy[MkLensToType[H, A]]
+  ): MkLensToType[H :: T, A] =
     new MkLensToType(new Lens[H :: T, A] {
       private[this] val hlz = ll.value()
 
@@ -46,6 +46,9 @@ private[meow] trait AutoLensLP3 extends AutoLensLP2 {
 }
 
 object MkLensToType extends AutoLensLP3 {
-  implicit def fromIso[S, A](implicit mkIso: MkIsoToType[S, A]): MkLensToType[S, A] =
-    new MkLensToType(mkIso().toLens)
+  implicit def refl[A]: MkLensToType[A, A] =
+    new MkLensToType(new TLens[A, A] {
+      def get(s: A): A = s
+      def set(s: A)(a: A): A = a
+    })
 }

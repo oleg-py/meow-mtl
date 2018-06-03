@@ -1,14 +1,14 @@
 package com.olegpy.meow.internal
 
 import cats.{Applicative, Apply, Functor, Monad}
-import cats.effect.concurrent.{Deferred, Ref}
-import cats.kernel.{Monoid, Semigroup}
+import cats.effect.concurrent.Ref
+import cats.kernel.Semigroup
 import cats.mtl._
 import cats.syntax.functor._
 import cats.syntax.semigroupal._
 import cats.syntax.monoid._
 
-object CatsEffectMtlInstances {
+private[meow] object CatsEffectMtlInstances {
   class RefMonadState[F[_]: Monad, S](ref: Ref[F, S]) extends MonadState[F, S] {
     val monad: Monad[F] = implicitly
     def get: F[S] = ref.get
@@ -32,11 +32,5 @@ object CatsEffectMtlInstances {
     extends ApplicativeAsk[F, S] with DefaultApplicativeAsk[F, S] {
     val applicative: Applicative[F] = implicitly
     def ask: F[S] = ref.get
-  }
-
-  class DeferredApplicativeAsk[F[_]: Applicative, A](deferred: Deferred[F, A])
-    extends ApplicativeAsk[F, A] with DefaultApplicativeAsk[F, A] {
-    val applicative: Applicative[F] = implicitly
-    def ask: F[A] = deferred.get
   }
 }
