@@ -1,12 +1,11 @@
 package com.olegpy.meow.internal
 
-import cats.{Applicative, Apply, Functor, Monad}
+import cats.{Applicative, Functor, Monad}
 import cats.effect.concurrent.Ref
 import cats.kernel.Semigroup
 import cats.mtl._
 import cats.syntax.functor._
-import cats.syntax.semigroupal._
-import cats.syntax.monoid._
+import cats.syntax.semigroup._
 
 private[meow] object CatsEffectMtlInstances {
   class RefMonadState[F[_]: Monad, S](ref: Ref[F, S]) extends MonadState[F, S] {
@@ -17,15 +16,10 @@ private[meow] object CatsEffectMtlInstances {
     def modify(f: S => S): F[Unit] = ref.update(f)
   }
 
-  class RefFunctorListen[F[_]: Apply, L: Semigroup](ref: Ref[F, L])
-    extends FunctorListen[F, L] {
-    val tell: FunctorTell[F, L] = new FunctorTell[F, L] with DefaultFunctorTell[F, L] {
-      val functor: Functor[F] = implicitly
-      def tell(l: L): F[Unit] = ref.update(_ |+| l)
-    }
-
-    def listen[A](fa: F[A]): F[(A, L)] = fa product ref.get
-    def listens[A, B](fa: F[A])(f: L => B): F[(A, B)] = fa product ref.get.map(f)
+  class RefFunctorTell[F[_]: Functor, L: Semigroup](ref: Ref[F, L])
+    extends FunctorTell[F, L] with DefaultFunctorTell[F, L] {
+    val functor: Functor[F] = implicitly
+    def tell(l: L): F[Unit] = ref.update(_ |+| l)
   }
 
   class RefApplicativeAsk[F[_]: Applicative, S](ref: Ref[F, S])

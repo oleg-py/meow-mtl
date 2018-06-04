@@ -2,7 +2,7 @@ package com.olegpy.meow
 
 import cats.effect.concurrent.Ref
 import cats.mtl._
-import cats.{Applicative, Apply, Monad, Semigroup}
+import cats.{Applicative, Functor, Monad, Semigroup}
 import com.olegpy.meow.internal.CatsEffectMtlInstances._
 
 package object effects {
@@ -69,7 +69,7 @@ package object effects {
      *   // TODO: example
      * }}}
      */
-    def runListen[B](f: FunctorListen[F, A] => B)(implicit F: Apply[F], A: Semigroup[A]): B =
-      f(new RefFunctorListen(self))
+    def runTell[B](f: FunctorTell[F, A] => B)(implicit F: Functor[F], A: Semigroup[A]): B =
+      f(new RefFunctorTell(self))
   }
 }

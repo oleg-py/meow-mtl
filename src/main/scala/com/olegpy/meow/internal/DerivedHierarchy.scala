@@ -71,7 +71,6 @@ private[meow] object DerivedHierarchy {
     implicit final def tellFromListen[F[_], L](implicit listen: FunctorListen[F, L]): FunctorTell[F, L] =
       conv.tellFromListen(listen)
 
-
     implicit def deriveApplicativeAsk[F[_], S, A](implicit
       isAbstractF: IsAbstract[F],
       parent: ApplicativeAsk[F, S],

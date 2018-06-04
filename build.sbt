@@ -7,7 +7,7 @@ inThisBuild(Seq(
 
 lazy val root = project.in(file("."))
   .aggregate(meowMtlJVM, meowMtlJS)
-  .dependsOn(meowMtlJVM) // TODO: Hack to make intellij work
+  .dependsOn(meowMtlJVM % "compile->compile;test->test") // TODO: Hack to make intellij work
   .settings(
     publish := {},
     publishLocal := {},
@@ -24,9 +24,12 @@ lazy val meowMtl = crossProject
 
     libraryDependencies ++= Seq(
       "com.chuusai"   %%% "shapeless"     % "2.3.3",
-      "org.typelevel" %%% "cats-mtl-core" % "0.2.3",
-      "org.typelevel" %%% "cats-effect"   % "1.0.0-RC2-d7181dc",
+      "org.typelevel" %%% "cats-mtl-core" % "0.3.0",
+      "org.typelevel" %%% "cats-effect"   % "1.0.0-RC2",
+      "org.typelevel" %%% "cats-effect-laws" % "1.0.0-RC2" % Test,
       "io.monix"      %%% "minitest"      % "2.1.1" % Test,
+      "io.monix"      %%% "minitest-laws" % "2.1.1" % Test,
+      "org.typelevel" %%% "cats-mtl-laws" % "0.3.0" % Test,
     ),
 
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
