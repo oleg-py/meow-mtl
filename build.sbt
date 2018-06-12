@@ -11,6 +11,11 @@ lazy val root = project.in(file("."))
   .settings(
     publish := {},
     publishLocal := {},
+    scalacOptions --= Seq(
+      "-Xfatal-warnings",
+      "-Ywarn-unused:params",
+      "-Ywarn-unused:implicits",
+    ),
   )
 
 lazy val meowMtlJS = meowMtl.js
@@ -35,10 +40,10 @@ lazy val meowMtl = crossProject
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
 
     testFrameworks += new TestFramework("minitest.runner.Framework"),
-
     scalacOptions --= Seq(
       "-Xfatal-warnings",
       "-Ywarn-unused:params",
       "-Ywarn-unused:implicits",
     ),
+
   )

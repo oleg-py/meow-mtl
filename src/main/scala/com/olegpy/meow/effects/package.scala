@@ -32,7 +32,7 @@ package object effects {
     /**
      * Execute an operation requiring some additional context `A` provided within this Ref.
      *
-     * The value inside Ref cannot be modified by this operation (see [[runListen]] or
+     * The value inside Ref cannot be modified by this operation (see [[runTell]] or
      * [[runState]] for such cases) but it can be modified concurrently by a forked task,
      * in which case reads will see the updated value.
      *

@@ -1,11 +1,13 @@
-import cats.data._
+package com.olegpy.meow.derivations
+
 import cats._
+import cats.data._
+import cats.mtl.ApplicativeAsk._
 import cats.mtl._
-import cats.syntax.functor._
-import cats.syntax.flatMap._
-import ApplicativeAsk._
-import com.olegpy.meow.hierarchy._
 import cats.mtl.instances.all._
+import cats.syntax.flatMap._
+import cats.syntax.functor._
+import com.olegpy.meow.hierarchy._
 
 final case class DbConfig(dbName: String)
 final case class NetworkConfig(server: String)
@@ -18,6 +20,7 @@ sealed trait AppError
 final case class ADbError(e: DbError) extends AppError
 final case class ANetworkError(e: NetworkError) extends AppError
 
+// This example serves as a compile-time test too.
 object Main {
   def readFromDb[
   F[_]: Functor : FunctorRaise[?[_], DbError] : ApplicativeAsk[?[_], DbConfig],
