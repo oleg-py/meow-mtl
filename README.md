@@ -13,6 +13,8 @@ Available for Scala 2.11 and 2.12, for Scala JVM and Scala.JS (0.6)
 libraryDependencies += "com.olegpy" %% "meow-mtl" % "0.1.0"
 ```
 
+Inspired by [Next-level MTL talk][mtl-talk] and discussions on cats gitter.
+
 ### Quick Example
 ```scala
 
@@ -228,8 +230,9 @@ previous message is still being processed, to ensure correct ordering:
 ## License
 MIT
 
-------------------------------
+
 [cats-effect]: https://github.com/typelevel/cats-effect
 [cats-mtl]: https://github.com/typelevel/cats-mtl
 [monocle]: https://github.com/julien-truffaut/Monocle
 [monix]: https://github.com/monix/monix
+[mtl-talk]: https://www.youtube.com/watch?v=GZPup5Iuaqw
