@@ -14,7 +14,7 @@ private[meow] object DerivedHierarchy {
       isAbstractF: IsAbstract[F],
       parent: MonadState[F, S],
       neq: S =:!= A,
-      mkLensToType: MkLensToType[S, A],
+      mkLensToType: MkLensToType[S, A]
     ): MonadState[F, A] =
       new StateOptics.Monad(parent, mkLensToType())
 
@@ -22,7 +22,7 @@ private[meow] object DerivedHierarchy {
       isAbstractF: IsAbstract[F],
       parent: MonadError[F, S],
       neq: S =:!= A,
-      mkPrismToType: MkPrismToType[S, A],
+      mkPrismToType: MkPrismToType[S, A]
     ): MonadError[F, A] =
       new RaiseOptics.Monad(parent, mkPrismToType())
 
@@ -30,7 +30,7 @@ private[meow] object DerivedHierarchy {
       isAbstractF: IsAbstract[F],
       parent: FunctorTell[F, S],
       neq: S =:!= A,
-      mkPrismToType: MkPrismToType[S, A],
+      mkPrismToType: MkPrismToType[S, A]
     ): FunctorTell[F, A] =
       new TellOptics.Functor(parent, mkPrismToType())
   }
@@ -46,7 +46,7 @@ private[meow] object DerivedHierarchy {
       isAbstractF: IsAbstract[F],
       parent: ApplicativeLocal[F, S],
       neq: S =:!= A,
-      mkLensToType: MkLensToType[S, A],
+      mkLensToType: MkLensToType[S, A]
     ): ApplicativeLocal[F, A] =
       new LocalOptics.Applicative(parent, mkLensToType())
 
@@ -55,7 +55,7 @@ private[meow] object DerivedHierarchy {
       isAbstractF: IsAbstract[F],
       parent: ApplicativeError[F, S],
       neq: S =:!= A,
-      mkPrismToType: MkPrismToType[S, A],
+      mkPrismToType: MkPrismToType[S, A]
     ): ApplicativeError[F, A] =
       new RaiseOptics.Applicative(parent, mkPrismToType())
 
@@ -75,7 +75,7 @@ private[meow] object DerivedHierarchy {
       isAbstractF: IsAbstract[F],
       parent: ApplicativeAsk[F, S],
       neq: S =:!= A,
-      mkLensToType: MkLensToType[S, A],
+      mkLensToType: MkLensToType[S, A]
     ): ApplicativeAsk[F, A] =
       new AskOptics.Applicative(parent, mkLensToType())
 
@@ -83,7 +83,7 @@ private[meow] object DerivedHierarchy {
       isAbstractF: IsAbstract[F],
       parent: FunctorRaise[F, S],
       neq: S =:!= A,
-      mkPrismToType: MkPrismToType[S, A],
+      mkPrismToType: MkPrismToType[S, A]
     ): FunctorRaise[F, A] =
       new RaiseOptics.Functor(parent, mkPrismToType())
   }

@@ -42,8 +42,8 @@ package object effects {
      *   def greet[F[_]: Sync: ApplicativeAsk[?[_], RequestId]](name: String): F[String] =
      *     for {
      *       rId <- ApplicativeAsk.askF[F]()
-     *       _   <- Sync[F].delay(println(s"Handling request $rId"))
-     *     } yield s"Hello, $name"
+     *       _   <- Sync[F].delay(println(s"Handling request \$rId"))
+     *     } yield s"Hello, \$name"
      *
      *
      *   for {
@@ -68,9 +68,9 @@ package object effects {
      * {{{
      *   def generateUser[F[_]: Sync: FunctorTell[?[_], String]](login: String) =
      *     for {
-     *       _   <- tellF[F]("Starting key generation for $login")
+     *       _   <- tellF[F](s"Starting key generation for \$login")
      *       pwd <- IO(Random.alphanumeric.take(16).mkString)
-     *       _   <- tellF[F]("Generated key: $key")
+     *       _   <- tellF[F](s"Generated key: \$key")
      *     } yield (login, pwd)
      *
      *

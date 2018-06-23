@@ -19,7 +19,7 @@ final class Consumer[F[_], A] private (val consume: A => F[Unit]) extends AnyVal
    *
    * {{{
    *   def greeter(name: String)(implicit ev: FunctorTell[IO, String]): IO[Unit] =
-   *     ev.tell(s"Long time no see, $name") >> IO.sleep(1.second)
+   *     ev.tell(s"Long time no see, \$name") >> IO.sleep(1.second)
    *
    *   def forever[A](ioa: IO[A]): IO[Nothing] = ioa >> forever(ioa)
    *
