@@ -1,7 +1,7 @@
 package com.olegpy.meow.derivations
 
-import cats.{ApplicativeError, Eq, Id, MonadError}
-import cats.data.{State, StateT, Writer}
+import cats.{ApplicativeError, Eq, MonadError}
+import cats.data.State
 import cats.instances.all._
 import cats.mtl._
 import minitest._
