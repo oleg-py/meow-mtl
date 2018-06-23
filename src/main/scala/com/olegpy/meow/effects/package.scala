@@ -66,8 +66,27 @@ package object effects {
      * `Writer` monad, initial (zero) is not required.
      *
      * {{{
-     *   // TODO: example
+     *   def generateUser[F[_]: Sync: FunctorTell[?[_], String]](login: String) =
+     *     for {
+     *       _   <- tellF[F]("Starting key generation for $login")
+     *       pwd <- IO(Random.alphanumeric.take(16).mkString)
+     *       _   <- tellF[F]("Generated key: $key")
+     *     } yield (login, pwd)
+     *
+     *
+     *   for {
+     *     ref  <- Ref[IO].of(NonEmptyList.of("Operation started"))
+     *     user <- ref.runTell { implicit ft =>
+     *       generateUser("Alice")
+     *     }
+     *     log <- ref.get
+     *     _   <- IO(println(log))
+     *   } yield user
      * }}}
+     *
+     * @see [[Consumer]] if you're interested in simply performing an operation
+     *      on each `tell`
+     *
      */
     def runTell[B](f: FunctorTell[F, A] => B)(implicit F: Functor[F], A: Semigroup[A]): B =
       f(new RefFunctorTell(self))
