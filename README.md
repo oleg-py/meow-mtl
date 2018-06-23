@@ -1,91 +1,235 @@
 # meow-mtl
-A tiny library enabling easy composition of MTL-style functions. Provides:
+![Maven central](https://img.shields.io/maven-central/v/com.olegpy/meow-mtl_2.12.svg?style=flat-square)
 
-- A mechanism of deriving optics based on types, a la classy lenses and prisms in Haskell
-- An integration layer for [cats-mtl](https://github.com/typelevel/cats-mtl)
+A catpanion library for [cats-mtl] and [cats-effect] providing:
 
-There are no published versions as of now. Stay tuned!
+- Easy composition of MTL-style functions
+- MTL instances for cats-effect compatible datatypes (e.g. `IO`)
 
-### Optics
+Available for Scala 2.11 and 2.12, for Scala JVM and Scala.JS (0.6)
 
-**meow-mtl** contains a small optics package suited to its needs. These are contained in package `com.olegpy.meow.optics`.
+```scala
+// Use %%% for scala.js or cross projects
+libraryDependencies += "com.olegpy" %% "meow-mtl" % "0.1.0"
+```
 
-Only the bare-bones types are provided: `TLens` (which is an alias for `shapeless.Lens`), `TPrism` and `TIso`, together with implicits:
+### Quick Example
+```scala
 
-- MkIsoToType[S, A] - available if `A = S` or if `S` is a single-element product type (e.g. `AnyVal` subclass)
-- MkPrismToType[S, A] - available if `A <: S` or if S is a sealed trait that contains element `A`, or if `MkIsoToType[S, A]` is available
-- MkLensToType[S, A] - available only if there's a path from `S` to `A` accessible by inspecting `case class` fields only (ignoring collections and methods)
+type Headers = Map[String, String]
+case class User(name: String)
+case class AuthedRequest(headers: Headers, user: User)
 
-These implicits expose a single method `apply()`, which provides respective optic instance.
+def greetUser[F[_]: Functor](implicit F: MonadState[F, User]): F[String] = {
+  F.get.map(user => s"Hello, ${user.name}")
+}
 
-### Instances
+def addRequestIdHeader[F[_]: Sync](implicit F: MonadState[F, Headers]): F[Unit] =
+  for {
+    id <- Sync[F].delay(UUID.randomUUID().toString)
+    _  <- F.modify(_ + ("X-Request-ID" -> id))
+  } yield ()
+```
 
-**meow-mtl** provides a replacement for `cats.mtl.hierarchy._` import:
+Now, if you had `AuthedRequest` as a state, that *should* mean that you
+have a state of `User` and `Headers` too. This library allows you to call these
+functions directly:
+
+```scala
+import com.olegpy.meow.hierarchy._
+
+def handleGreetRequest[F[_]: Sync](implicit F: MonadState[F, AuthedRequest]) =
+  for {
+    _ <- addRequestIdHeader[F]
+    r <- greetUser[F]
+  } yield r
+```
+
+To get that `MonadState` instance, it's possible to use `StateT`
+transformer. But meow-mtl allows you to use `Ref` from cats-effect
+instead, yielding better performance. So at the edge of your application
+it is possible to do this:
+
+```scala
+import com.olegpy.meow.effects._
+
+def handleRequest: IO[String] =
+  for {
+    ref <- Ref[IO].of(AuthedRequest(Map(), User("John")))
+    res <- ref.runState { implicit monadState =>
+      handleGreetRequest[IO]
+    }
+  } yield res
+```
+
+## Classy optics and MTL composition
+
+Primary feature of meow-mtl is enabling boilerplate-free composition of
+functions using cats-mtl typeclasses, in cases where instance clearly
+either contains necessary fields (like State example above) or can be
+converted to a necessary type. For example, it's possible to narrow
+type of `MonadError` from `Throwable` to a custom exception type:
+
+```scala
+case class MyException(msg: String) extends Throwable
+
+def handleOnlyMy[F[_], A](f: F[A], fallback: F[A])(implicit F: MonadError[F, MyException]) =
+  f.handleErrorWith(_ => fallback)
+
+
+val io: IO[Int] = ???
+handleOnlyMy(io, 42)
+```
+
+This is witnessed by `Lens` and `Prism` optics that meow-mtl generates
+when you try to make a call to such method.
+
+### High-level API: automatic derivation
+
+All automatic derivation requires is a single import:
 
 ```scala
 import com.olegpy.meow.hierarchy._
 ```
 
-It contains whole hierarchy of MTL typeclasses, with instances derived based on optics having higher priority than subtyping.
-As a bonus, derived instances for `ApplicativeError` and `MonadError` of [cats](https://github.com/typelevel/cats) are provided as well.
+This needs to be done in every file where your call requires deriving an
+instance.
 
-#### Caveats ####
-Currently it's not possible to use meow's hierarchy together with cats-mtl instances.
-The workaround is to split code using concrete effect types with code using typeclass hierarchy into different modules / files.
-Search for a solution is still ongoing. Using e.g. shapeless `Strict` results in exponential increase of compile times, which is not worth it.
+Supported typeclasses:
 
-#### Example ####
+| Typeclass        | Required optic |
+|------------------|----------------|
+| ApplicativeError | Prism          |
+| MonadError       | Prism          |
+| FunctorRaise     | Prism          |
+| FunctorTell      | Prism          |
+| ApplicativeAsk   | Lens           |
+| ApplicativeLocal | Lens           |
+| MonadState       | Lens           |
+
+#### IMPORTANT!
+
+Don't use `cats.mtl.implicits._` or `cats.mtl.hierarchy.base._` imports.
+Hierarchy import is subsumed by `com.olegpy.meow.hierarchy._`. Import
+`cats.mtl.instances.all._` and `cats.mtl.syntax.all._` if you need it.
+
+Failure to do this will result in ambiguous implicit instances.
+
+
+### Low-level API: optic providers
+
+Alternatively, `com.olegpy.meow.optics` can be used directly:
+
 ```scala
-import cats.data._
-import cats._
-import cats.mtl._
-import cats.syntax.functor._
-import cats.syntax.flatMap._
-import ApplicativeAsk._
+case class User(name: String)
+type HasUser[A] = MkLensToType[A, User]
 
-final case class DbConfig(dbName: String)
-final case class NetworkConfig(server: String)
-final case class AppConfig(db: DbConfig, nc: NetworkConfig)
 
-sealed trait DbError
-sealed trait NetworkError
+def isFred[A](a: A)(implicit mkLens: HasUser[A]) =
+  mkLens().get(a).name == "Fred"
+```
 
-sealed trait AppError
-final case class ADbError(e: DbError) extends AppError
-final case class ANetworkError(e: NetworkError) extends AppError
+In here, `mkLens` is an object with 0-args `apply` method, that creates
+a shapeless Lens from A to User, e.g.:
 
-object Main {
-  object program {
-    import com.olegpy.meow.hierarchy._
+```scala
+case class RequestCtx(user: User, id: String)
 
-    def readFromDb[
-    F[_]: Functor : FunctorRaise[?[_], DbError] : ApplicativeAsk[?[_], DbConfig],
-    ]: F[String] =
-      ask.map(_.dbName)
+assert { isFred(RequestCtx(User("Fred"), "0x42")) }
+```
 
-    def sendToNetwork[
-    F[_]: Functor : FunctorRaise[?[_], NetworkError] : ApplicativeAsk[?[_], NetworkConfig],
-    ](s: String): F[Unit] =
-      ask.map(_.server + s).map(println)
+Prism works in similar way, but it's a custom class (not shapeless
+Prism) with `apply` and `unapply` methods for construction and matching.
 
-    // Note that FunctorRaise instances for NetworkError and DbError,
-    // as well as ApplicativeAsk instances for NetworkConfig and DbConfig
-    // are automatically available without having to do anything manually
-    def readAndSend[
-    F[_]: Monad : FunctorRaise[?[_], AppError] : ApplicativeAsk[?[_], AppConfig]
-    ]: F[Unit] = for {
-      s <- readFromDb[F]
-      _ <- sendToNetwork[F](s)
-    } yield ()
-  }
+This is a very bare-bones implementation of optics, having only minimal
+functionality needed to support automatic derivation without adding
+extra dependencies. If you need a full-fledged optics library, consider
+using [monocle] instead.
 
-  def main(args: Array[String]): Unit = {
-    import cats.mtl.implicits._ // notice that the instanes are imported only here - see caveat described above
-    type T[X] = EitherT[Reader[AppConfig, ?], AppError, X]
-    val start = AppConfig(DbConfig("db"), NetworkConfig("nc"))
-    program.readAndSend[T].value(start)
+## Cats-effect instances
 
-    println("hoi")
-  }
+meow-mtl provides instances for cats-effect compatible data types like
+cats-effect own `IO` or [monix] `Coeval` and `Task`. These instances
+reside in `com.olegpy.meow.effects` package and provide a more flexible
+and performant alternative to monad transformer stacks.
+
+
+Because construction of such instances is typically effectful, they are
+*locally scoped*. That means, instead of being available by importing,
+they require a special method to be called with a lambda, which will
+receive an instance, i.e.:
+
+```scala
+// `unsafe` is used for the sake of an example. I don't recommend doing that.
+Ref.unsafe[IO, Int](0).runAsk { implicit askInstance =>
+  ??? // ApplicativeAsk[IO, Int] is available in this scope
 }
 ```
+
+### Ref
+`Ref` is a referentially transparent variable added in cats-effect
+1.0.0-RC2. It supports `MonadState`, `ApplicativeAsk` and `FunctorTell`
+effects (the latest requires a `Semigroup` instance for type of
+contained data).
+
+Instances are provided by extension methods `runState`, `runAsk` and
+`runTell` respectively.
+
+#### Example: counter
+
+This is a simple example of using `MonadState` instance of `Ref`. Note
+how updated state can be retrieved from `ref` after executing operation.
+
+```scala
+def getAndIncrement[F[_]: Apply](implicit MS: MonadState[F, Int]) =
+  MS.get <* MS.modify(_ + 1)
+
+
+for {
+  ref <- Ref.of[IO](0)
+  out <- ref.runState { implicit ms =>
+    getAndIncrement[IO].replicateA(3).as("Done")
+  }
+  state <- ref.get
+} yield (out, state) == ("Done", 3)
+```
+
+### Consumer
+
+`Consumer` is a simple wrapper around `A => F[Unit]`. It supports a
+single effect - `FunctorTell`, and can be used for things like logging,
+persistence, notifications, etc.
+
+`Consumer` instances are constructed with `apply` method on a companion.
+
+
+#### Example: async logger
+
+That logger only waits if a
+previous message is still being processed, to ensure correct ordering:
+
+```scala
+ def greeter(name: String)(implicit ev: FunctorTell[IO, String]): IO[Unit] =
+   ev.tell(s"Long time no see, \$name") >> IO.sleep(1.second)
+
+ def forever[A](ioa: IO[A]): IO[Nothing] = ioa >> forever(ioa)
+
+ for {
+    mVar <- MVar.empty[IO, String]
+    logger = forever(mVar.take.flatMap(s => IO(println(s)))
+    _ <- logger.start // Do logging in background
+    _ <- Consumer(mVar.put).runTell { implicit tell =>
+      forever(greeter("Oleg"))
+    }
+ } yield ()
+```
+
+
+## License
+MIT
+
+------------------------------
+[cats-effect]: https://github.com/typelevel/cats-effect
+[cats-mtl]: https://github.com/typelevel/cats-mtl
+[monocle]: https://github.com/julien-truffaut/Monocle
+[monix]: https://github.com/monix/monix
