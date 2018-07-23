@@ -4,7 +4,7 @@ import xerial.sbt.Sonatype._
 inThisBuild(Seq(
   organization := "com.olegpy",
   scalaVersion := "2.12.4",
-  version := "0.1.0",
+  version := "0.1.1",
   crossScalaVersions := Seq("2.11.12", "2.12.4"),
 ))
 
