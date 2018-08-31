@@ -3,9 +3,9 @@ import xerial.sbt.Sonatype._
 
 inThisBuild(Seq(
   organization := "com.olegpy",
-  scalaVersion := "2.12.4",
+  scalaVersion := "2.12.6",
   version := "0.1.1",
-  crossScalaVersions := Seq("2.11.12", "2.12.4"),
+  crossScalaVersions := Seq("2.11.12", "2.12.6"),
 ))
 
 lazy val root = project.in(file("."))
@@ -36,14 +36,14 @@ def commonSettings = List(
   libraryDependencies ++= Seq(
     "com.chuusai"   %%% "shapeless"     % "2.3.3",
     "org.typelevel" %%% "cats-mtl-core" % "0.3.0",
-    "org.typelevel" %%% "cats-effect"   % "1.0.0-RC2",
-    "org.typelevel" %%% "cats-effect-laws" % "1.0.0-RC2" % Test,
+    "org.typelevel" %%% "cats-effect"   % "1.0.0-RC3-3e17307",
+    "org.typelevel" %%% "cats-effect-laws" % "1.0.0-RC3-3e17307" % Test,
     "io.monix"      %%% "minitest"      % "2.1.1" % Test,
     "io.monix"      %%% "minitest-laws" % "2.1.1" % Test,
     "org.typelevel" %%% "cats-mtl-laws" % "0.3.0" % Test,
   ),
 
-  addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
+  addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"),
 
   testFrameworks += new TestFramework("minitest.runner.Framework"),
   scalacOptions --= Seq(
