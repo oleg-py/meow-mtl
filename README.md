@@ -10,7 +10,7 @@ Available for Scala 2.11 and 2.12, for Scala JVM and Scala.JS (0.6)
 
 ```scala
 // Use %%% for scala.js or cross projects
-libraryDependencies += "com.olegpy" %% "meow-mtl" % "0.1.1"
+libraryDependencies += "com.olegpy" %% "meow-mtl" % "0.1.2"
 ```
 
 Inspired by [Next-level MTL talk][mtl-talk] and discussions on cats gitter.
