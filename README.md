@@ -10,7 +10,7 @@ Available for Scala 2.11 and 2.12, for Scala JVM and Scala.JS (0.6)
 
 ```scala
 // Use %%% for scala.js or cross projects
-libraryDependencies += "com.olegpy" %% "meow-mtl" % "0.1.2"
+libraryDependencies += "com.olegpy" %% "meow-mtl" % "0.1.3"
 ```
 
 Inspired by [Next-level MTL talk][mtl-talk] and discussions on cats gitter.
@@ -85,6 +85,16 @@ handleOnlyMy(io, 42)
 
 This is witnessed by `Lens` and `Prism` optics that meow-mtl generates
 when you try to make a call to such method.
+
+As another neat example, generated typeclasses can be used as ad-hoc lenses
+
+```
+case class Part(int: Int)
+case class Whole(part: Part)
+
+def modify[F[_]: MonadState[?[_], Whole]] =
+  MonadState[F, Part].set(Part(42)) // automatically "zooms" into Whole.part
+```
 
 ### High-level API: automatic derivation
 
