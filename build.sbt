@@ -4,7 +4,7 @@ import xerial.sbt.Sonatype._
 inThisBuild(Seq(
   organization := "com.olegpy",
   scalaVersion := "2.12.6",
-  version := "0.1.1",
+  version := "0.1.3",
   crossScalaVersions := Seq("2.11.12", "2.12.6"),
 ))
 
@@ -13,8 +13,8 @@ lazy val root = project.in(file("."))
   .settings(commonSettings)
   .settings(
     skip in publish := true,
-    publish := (),
-    publishLocal := (),
+    publish := {},
+    publishLocal := {},
     publishArtifact := false,
     publishTo := None,
   )
@@ -33,11 +33,14 @@ def commonSettings = List(
   licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
   homepage := Some(url("http://github.com/oleg-py/meow-mtl")),
 
+  dependencyOverrides +=
+    "org.typelevel" %%% "cats-core"   % "1.4.0",
+  
   libraryDependencies ++= Seq(
     "com.chuusai"   %%% "shapeless"     % "2.3.3",
     "org.typelevel" %%% "cats-mtl-core" % "0.3.0",
-    "org.typelevel" %%% "cats-effect"   % "1.0.0-RC3-3e17307",
-    "org.typelevel" %%% "cats-effect-laws" % "1.0.0-RC3-3e17307" % Test,
+    "org.typelevel" %%% "cats-effect"   % "1.0.0",
+    "org.typelevel" %%% "cats-effect-laws" % "1.0.0" % Test,
     "io.monix"      %%% "minitest"      % "2.1.1" % Test,
     "io.monix"      %%% "minitest-laws" % "2.1.1" % Test,
     "org.typelevel" %%% "cats-mtl-laws" % "0.3.0" % Test,
