@@ -4,7 +4,7 @@ import xerial.sbt.Sonatype._
 inThisBuild(Seq(
   organization := "com.olegpy",
   scalaVersion := "2.12.6",
-  version := "0.1.2",
+  version := "0.1.3",
   crossScalaVersions := Seq("2.11.12", "2.12.6"),
 ))
 
@@ -34,7 +34,7 @@ def commonSettings = List(
   homepage := Some(url("http://github.com/oleg-py/meow-mtl")),
 
   dependencyOverrides +=
-    "org.typelevel" %%% "cats-core"   % "1.3.1",
+    "org.typelevel" %%% "cats-core"   % "1.4.0",
   
   libraryDependencies ++= Seq(
     "com.chuusai"   %%% "shapeless"     % "2.3.3",
@@ -46,7 +46,7 @@ def commonSettings = List(
     "org.typelevel" %%% "cats-mtl-laws" % "0.3.0" % Test,
   ),
 
-  addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.6"),
+  addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"),
 
   testFrameworks += new TestFramework("minitest.runner.Framework"),
   scalacOptions --= Seq(
