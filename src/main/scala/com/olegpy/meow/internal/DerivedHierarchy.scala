@@ -64,15 +64,6 @@ private[meow] object DerivedHierarchy {
   }
 
   trait Priority2 extends Priority3 {
-    implicit final def functorEmptyFromTraverseEmpty[F[_]](implicit F: TraverseEmpty[F]): FunctorEmpty[F] =
-      conv.functorEmptyFromTraverseEmpty(F)
-
-    implicit final def askFromLocal[F[_], E](implicit local: ApplicativeLocal[F, E]): ApplicativeAsk[F, E] =
-      conv.askFromLocal(local)
-
-    implicit final def tellFromListen[F[_], L](implicit listen: FunctorListen[F, L]): FunctorTell[F, L] =
-      conv.tellFromListen(listen)
-
     implicit def deriveApplicativeAsk[F[_], S, A](implicit
       isAbstractF: IsAbstract[F],
       parent: ApplicativeAsk[F, S],
