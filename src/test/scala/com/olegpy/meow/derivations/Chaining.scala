@@ -33,17 +33,17 @@ object Chaining {
     derives[Int]
     derives[Long]
   }
-
-  def testAsk[F[_]](implicit ev: ApplicativeAsk[F, State]): Unit = {
-    def derives[S](implicit ev: ApplicativeAsk[F, S]): Unit = ()
-
-    derives[State]
-    derives[Inner]
-    derives[StateComponent]
-    derives[String]
-    derives[Int]
-    derives[Long]
-  }
+//
+//  def testAsk[F[_]](implicit ev: ApplicativeAsk[F, State]): Unit = {
+//    def derives[S](implicit ev: ApplicativeAsk[F, S]): Unit = ()
+//
+//    derives[State]
+//    derives[Inner]
+//    derives[StateComponent]
+//    derives[String]
+//    derives[Int]
+//    derives[Long]
+//  }
 
   def testStateToAsk[F[_]](implicit ev: MonadState[F, State]): Unit = {
     implicitly[ApplicativeAsk[F, State]]
