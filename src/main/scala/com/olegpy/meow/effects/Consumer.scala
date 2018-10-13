@@ -35,6 +35,15 @@ final class Consumer[F[_], A] private (val consume: A => F[Unit]) extends AnyVal
    */
   def runTell[B](f: FunctorTell[F, A] => B)(implicit F: Functor[F]): B =
     f(new Consumer.TellInstance(this))
+
+  /**
+   * Directly return an instance for `FunctorTell` that is based on this `Consumer`
+   *
+   * Returned instance would call the `Consumer` function as its `tell` operation
+   *
+   * @see [[runTell]] for potentially more convenient usage
+   */
+  def tellInstance(implicit F: Functor[F]): FunctorTell[F, A] = runTell(identity)
 }
 
 object Consumer {

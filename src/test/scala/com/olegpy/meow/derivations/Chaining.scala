@@ -33,28 +33,16 @@ object Chaining {
     derives[Int]
     derives[Long]
   }
-//
-//  def testAsk[F[_]](implicit ev: ApplicativeAsk[F, State]): Unit = {
-//    def derives[S](implicit ev: ApplicativeAsk[F, S]): Unit = ()
-//
-//    derives[State]
-//    derives[Inner]
-//    derives[StateComponent]
-//    derives[String]
-//    derives[Int]
-//    derives[Long]
-//  }
 
-  def testStateToAsk[F[_]](implicit ev: MonadState[F, State]): Unit = {
-    implicitly[ApplicativeAsk[F, State]]
-    implicitly[ApplicativeAsk[F, Int]]
-    ()
-  }
+  def testAsk[F[_]](implicit ev: ApplicativeAsk[F, State]): Unit = {
+    def derives[S](implicit ev: ApplicativeAsk[F, S]): Unit = ()
 
-  def testStateToTell[F[_]](implicit ev: MonadState[F, State]): Unit = {
-    implicitly[FunctorTell[F, State]]
-    implicitly[FunctorTell[F, Int]]
-    ()
+    derives[State]
+    derives[Inner]
+    derives[StateComponent]
+    derives[String]
+    derives[Int]
+    derives[Long]
   }
 
   case class DbError(text: String)
