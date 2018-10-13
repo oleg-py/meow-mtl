@@ -30,6 +30,16 @@ package object effects {
       f(new RefMonadState(self))
 
     /**
+     * Directly return an instance for `MonadState` that is based on this `Ref`
+     *
+     * Returned instance would use `get`/`set` methods of this `Ref` to manipulate state
+     *
+     * @see [[runState]] for potentially more convenient usage
+     */
+    def stateInstance(implicit F: Monad[F]): MonadState[F, A] =
+      runState(identity)
+
+    /**
      * Execute an operation requiring some additional context `A` provided within this Ref.
      *
      * The value inside Ref cannot be modified by this operation (see [[runTell]] or
@@ -57,6 +67,16 @@ package object effects {
      */
     def runAsk[B](f: ApplicativeAsk[F, A] => B)(implicit F: Applicative[F]): B =
       f(new RefApplicativeAsk(self))
+
+    /**
+     * Directly return an instance for `ApplicativeAsk` that is based on this `Ref`
+     *
+     * Returned instance would use `get` method of this `Ref` to provide a value
+     *
+     * @see [[runAsk]] for potentially more convenient usage
+     */
+    def askInstance(implicit F: Applicative[F]): ApplicativeAsk[F, A] =
+      runAsk(identity)
 
     /**
      * Execute an operation requiring ability to "log" values of type `A`, and,
@@ -90,5 +110,16 @@ package object effects {
      */
     def runTell[B](f: FunctorTell[F, A] => B)(implicit F: Functor[F], A: Semigroup[A]): B =
       f(new RefFunctorTell(self))
+
+    /**
+     * Directly return an instance for `FunctorTell` that is based on this `Ref`
+     *
+     * Returned instance would use `modify` method of this `Ref` and a `Semigroup`
+     * to accumulate results
+     *
+     * @see [[runTell]] for potentially more convenient usage
+     */
+    def tellInstance(implicit F: Functor[F], A: Semigroup[A]): FunctorTell[F, A] =
+      runTell(identity)
   }
 }

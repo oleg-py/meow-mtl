@@ -45,18 +45,6 @@ object Chaining {
     derives[Long]
   }
 
-  def testStateToAsk[F[_]](implicit ev: MonadState[F, State]): Unit = {
-    implicitly[ApplicativeAsk[F, State]]
-    implicitly[ApplicativeAsk[F, Int]]
-    ()
-  }
-
-  def testStateToTell[F[_]](implicit ev: MonadState[F, State]): Unit = {
-    implicitly[FunctorTell[F, State]]
-    implicitly[FunctorTell[F, Int]]
-    ()
-  }
-
   case class DbError(text: String)
   sealed trait NetworkError
 

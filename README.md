@@ -5,12 +5,13 @@ A catpanion library for [cats-mtl] and [cats-effect] providing:
 
 - Easy composition of MTL-style functions
 - MTL instances for cats-effect compatible datatypes (e.g. `IO`)
+- Conflict-free implicits for sub-instances (e.g. `MonadState` => `Monad`)
 
 Available for Scala 2.11 and 2.12, for Scala JVM and Scala.JS (0.6)
 
 ```scala
 // Use %%% for scala.js or cross projects
-libraryDependencies += "com.olegpy" %% "meow-mtl" % "0.1.3"
+libraryDependencies += "com.olegpy" %% "meow-mtl" % "0.2.0"
 ```
 
 Inspired by [Next-level MTL talk][mtl-talk] and discussions on cats gitter.
@@ -122,11 +123,13 @@ Supported typeclasses:
 #### IMPORTANT!
 
 Don't use `cats.mtl.implicits._` or `cats.mtl.hierarchy.base._` imports.
-Hierarchy import is subsumed by `com.olegpy.meow.hierarchy._`. Import
-`cats.mtl.instances.all._` and `cats.mtl.syntax.all._` if you need it.
+Import `cats.mtl.instances.all._` and `cats.mtl.syntax.all._` if you
+need it.
 
 Failure to do this will result in ambiguous implicit instances.
 
+In cats-mtl 0.4.0 hierarchy has been mostly replaced by subtyping. The
+remaining hierarchy imports will possibly be [phased out](typelevel/cats-mtl#31)
 
 ### Low-level API: optic providers
 
@@ -178,6 +181,17 @@ Ref.unsafe[IO, Int](0).runAsk { implicit askInstance =>
 }
 ```
 
+Alternatively, you can pull it out with specific methods if you intend
+to use it explicitly or with better-monadic-for implicit patterns:
+
+```scala
+implicit val instance: MonadState[IO, Int] =
+  Ref.unsafe[IO, Int](0).askInstance
+
+// MonadState available below
+???
+```
+
 ### Ref
 `Ref` is a referentially transparent variable added in cats-effect
 1.0.0-RC2. It supports `MonadState`, `ApplicativeAsk` and `FunctorTell`
@@ -217,8 +231,8 @@ persistence, notifications, etc.
 
 #### Example: async logger
 
-That logger only waits if a
-previous message is still being processed, to ensure correct ordering:
+That logger only waits if a previous message is still being processed,
+to ensure correct ordering:
 
 ```scala
  def greeter(name: String)(implicit ev: FunctorTell[IO, String]): IO[Unit] =
@@ -236,6 +250,31 @@ previous message is still being processed, to ensure correct ordering:
  } yield ()
 ```
 
+
+## Sub-instances
+meow-mtl also provides a set of implicits which let you use
+`Monad`/`Applicative`/`Functor` instances if you have an MTL instance of
+compatible type (e.g. `MonadState`/`ApplicativeAsk`/`FunctorTell`)
+
+```scala
+import cats.implicits._
+import com.olegpy.meow.prelude._ // just this one import
+
+// Can use pure and flatTap without having a Monad constraint or pull
+// it out manually
+def test[F[_]](implicit MS: MonadState[F, Int]): F[Int] =
+  42.pure[F].flatTap(MS.set)
+```
+
+It uses `LowPriority` mechanism from `shapeless` to ensure that _having_
+a constraint does not result in ambiguities:
+
+```
+import cats.effect.Sync
+// Uses Sync as a Monad instance, instead of getting it from MonadState
+def test2[F[_]: Sync](implicit MS: MonadState[F, Int]): F[Int] =
+  42.pure[F].flatTap(MS.set)
+```
 
 ## License
 MIT

@@ -42,13 +42,13 @@ object DerivedLawsSuite extends SimpleTestSuite with Checkers {
     ApplicativeLocalTests(derive[M]).applicativeLocal[Int, String]
   }
 
-  checkAll("ApplicativeAsk") {
-    type M[A] = Data => A
-    def derive[F[_]](implicit MS: ApplicativeAsk[F, Data]): ApplicativeAsk[F, Int] =
-      implicitly
-
-    ApplicativeAskTests(derive[M]).applicativeAsk[Int]
-  }
+//  checkAll("ApplicativeAsk") {
+//    type M[A] = Data => A
+//    def derive[F[_]](implicit MS: ApplicativeAsk[F, Data]): ApplicativeAsk[F, Int] =
+//      implicitly
+//
+//    ApplicativeAskTests(derive[M]).applicativeAsk[Int]
+//  }
 
   type DataC = Either[String, Either[Int, Long]]
 

@@ -25,12 +25,12 @@ object Main {
   def readFromDb[
   F[_]: Functor : FunctorRaise[?[_], DbError] : ApplicativeAsk[?[_], DbConfig],
   ]: F[String] =
-    ask.map(_.dbName)
+    askF[F]().map(_.dbName)
 
   def sendToNetwork[
   F[_]: Functor : FunctorRaise[?[_], NetworkError] : ApplicativeAsk[?[_], NetworkConfig],
   ](s: String): F[Unit] =
-    ask.map(_.server + s).map(println)
+    askF[F]().map(_.server + s).map(println)
 
   def readAndSend[
   F[_]: Monad : FunctorRaise[?[_], AppError] : ApplicativeAsk[?[_], AppConfig]
