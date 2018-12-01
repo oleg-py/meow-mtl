@@ -129,7 +129,7 @@ need it.
 Failure to do this will result in ambiguous implicit instances.
 
 In cats-mtl 0.4.0 hierarchy has been mostly replaced by subtyping. The
-remaining hierarchy imports will possibly be [phased out](typelevel/cats-mtl#31)
+remaining hierarchy imports will possibly be [phased out](https://github.com/typelevel/cats-mtl/issues/31)
 
 ### Low-level API: optic providers
 
