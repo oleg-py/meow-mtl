@@ -89,7 +89,7 @@ when you try to make a call to such method.
 
 As another neat example, generated typeclasses can be used as ad-hoc lenses
 
-```
+```scala
 case class Part(int: Int)
 case class Whole(part: Part)
 
@@ -269,7 +269,7 @@ def test[F[_]](implicit MS: MonadState[F, Int]): F[Int] =
 It uses `LowPriority` mechanism from `shapeless` to ensure that _having_
 a constraint does not result in ambiguities:
 
-```
+```scala
 import cats.effect.Sync
 // Uses Sync as a Monad instance, instead of getting it from MonadState
 def test2[F[_]: Sync](implicit MS: MonadState[F, Int]): F[Int] =
