@@ -23,12 +23,12 @@ final case class ANetworkError(e: NetworkError) extends AppError
 // This example serves as a compile-time test too.
 object Main {
   def readFromDb[
-  F[_]: Functor : FunctorRaise[?[_], DbError] : ApplicativeAsk[?[_], DbConfig],
+  F[_]: Functor : FunctorRaise[?[_], DbError] : ApplicativeAsk[?[_], DbConfig]
   ]: F[String] =
     askF[F]().map(_.dbName)
 
   def sendToNetwork[
-  F[_]: Functor : FunctorRaise[?[_], NetworkError] : ApplicativeAsk[?[_], NetworkConfig],
+  F[_]: Functor : FunctorRaise[?[_], NetworkError] : ApplicativeAsk[?[_], NetworkConfig]
   ](s: String): F[Unit] =
     askF[F]().map(_.server + s).map(println)
 
