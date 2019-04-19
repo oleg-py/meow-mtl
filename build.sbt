@@ -38,12 +38,12 @@ def commonSettings = List(
   
   libraryDependencies ++= Seq(
     "com.chuusai"   %%% "shapeless"     % "2.3.3",
-    "org.typelevel" %%% "cats-mtl-core" % "0.4.0",
+    "org.typelevel" %%% "cats-mtl-core" % "0.5.0",
     "org.typelevel" %%% "cats-effect"   % "1.0.0",
     "org.typelevel" %%% "cats-effect-laws" % "1.0.0" % Test,
     "io.monix"      %%% "minitest"      % "2.1.1" % Test,
     "io.monix"      %%% "minitest-laws" % "2.1.1" % Test,
-    "org.typelevel" %%% "cats-mtl-laws" % "0.4.0" % Test,
+    "org.typelevel" %%% "cats-mtl-laws" % "0.5.0" % Test,
   ),
 
   addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7"),
