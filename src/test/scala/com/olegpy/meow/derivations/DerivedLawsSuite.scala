@@ -69,4 +69,13 @@ object DerivedLawsSuite extends SimpleTestSuite with Checkers {
 
     ApplicativeErrorTests(derive[M]).applicativeError[Int, Long, String]
   }
+
+  checkAll("ApplicativeHandle") {
+    type M[A] = Either[DataC, A]
+
+    def derive[F[_]](implicit MS: ApplicativeHandle[F, DataC]): ApplicativeHandle[F, Long] =
+      implicitly
+
+    ApplicativeHandleTests(derive[M]).applicativeHandle[Int]
+  }
 }
