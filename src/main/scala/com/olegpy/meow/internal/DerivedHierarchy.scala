@@ -63,6 +63,14 @@ private[meow] object DerivedHierarchy {
       mkPrismToType: MkPrismToType[S, A]
     ): ApplicativeError[F, A] =
       new RaiseOptics.Applicative(parent, mkPrismToType())
+
+    implicit def deriveApplicativeHandle[F[_], S, A](implicit
+      isAbstractF: IsAbstract[F],
+      parent: ApplicativeHandle[F, S],
+      neq: S =:!= A,
+      mkPrismToType: MkPrismToType[S, A]
+    ): ApplicativeHandle[F, A] =
+      new HandleOptics.Applicative(parent, mkPrismToType())
   }
 
   trait Priority3 extends Priority4 {

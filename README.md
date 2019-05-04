@@ -110,15 +110,16 @@ instance.
 
 Supported typeclasses:
 
-| Typeclass        | Required optic |
-|------------------|----------------|
-| ApplicativeError | Prism          |
-| MonadError       | Prism          |
-| FunctorRaise     | Prism          |
-| FunctorTell      | Prism          |
-| ApplicativeAsk   | Lens           |
-| ApplicativeLocal | Lens           |
-| MonadState       | Lens           |
+| Typeclass         | Required optic |
+|-------------------|----------------|
+| ApplicativeError  | Prism          |
+| ApplicativeHandle | Prism          |
+| MonadError        | Prism          |
+| FunctorRaise      | Prism          |
+| FunctorTell       | Prism          |
+| ApplicativeAsk    | Lens           |
+| ApplicativeLocal  | Lens           |
+| MonadState        | Lens           |
 
 #### IMPORTANT!
 
