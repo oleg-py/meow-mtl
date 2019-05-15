@@ -187,7 +187,7 @@ to use it explicitly or with better-monadic-for implicit patterns:
 
 ```scala
 implicit val instance: MonadState[IO, Int] =
-  Ref.unsafe[IO, Int](0).askInstance
+  Ref.unsafe[IO, Int](0).stateInstance
 
 // MonadState available below
 ???
