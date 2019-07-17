@@ -14,6 +14,12 @@ Available for Scala 2.11 and 2.12, for Scala JVM and Scala.JS (0.6)
 libraryDependencies += "com.olegpy" %% "meow-mtl" % "0.2.0"
 ```
 
+A milestone release is available for 2.11-2.13 that is based on cats and
+cats-effect `2.0.0-M4`:
+```scala
+libraryDependencies += "com.olegpy" %% "meow-mtl" % "0.3.0-M1"
+```
+
 Inspired by [Next-level MTL talk][mtl-talk] and discussions on cats gitter.
 
 ### Quick Example
