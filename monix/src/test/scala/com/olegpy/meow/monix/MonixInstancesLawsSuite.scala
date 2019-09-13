@@ -40,7 +40,7 @@ object MonixInstancesLawsSuite extends SimpleTestSuite with Checkers {
     val lf = lhs.runToFutureOpt
     val rf = rhs.runToFutureOpt
     ts.tick(1.day)
-    lf.value.map(_.toEither) === rf.value.map(_.toEither)
+    lf.value === rf.value
   }
 
   implicit def arbitraryTask[A: Arbitrary: Cogen] =
