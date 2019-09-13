@@ -1,17 +1,25 @@
 import xerial.sbt.Sonatype._
-
+import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 inThisBuild(Seq(
   organization := "com.olegpy",
   scalaVersion := "2.13.0",
-  version := "0.3.0-M1",
+  version := "0.4.0",
   crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0"),
 ))
 
 lazy val root = project.in(file("."))
-  .aggregate(meowMtlJVM, meowMtlJS)
+  .aggregate(
+    core.jvm,
+    core.js,
+    effects.jvm,
+    effects.js,
+    monix.jvm,
+    monix.js,
+  )
   .settings(commonSettings)
   .settings(
+    name := "meow-mtl",
     skip in publish := true,
     publish := {},
     publishLocal := {},
@@ -19,32 +27,44 @@ lazy val root = project.in(file("."))
     publishTo := None,
   )
 
-lazy val meowMtlJS = meowMtl.js
-lazy val meowMtlJVM = meowMtl.jvm
 
-lazy val meowMtl = crossProject
+lazy val core = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Pure)
-  .in(file("."))
+  .settings(name := "meow-mtl-core")
   .settings(commonSettings)
+  .settings(libraryDependencies ++= List(
+    "com.chuusai" %%% "shapeless" % "2.3.3"
+  ))
+
+lazy val effects = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+  .settings(name := "meow-mtl-effects")
+  .settings(commonSettings)
+  .settings(libraryDependencies ++= List(
+    "org.typelevel" %%% "cats-effect"   % "2.0.0",
+    "org.typelevel" %%% "cats-effect-laws" % "2.0.0" % Test,
+  ))
+
+lazy val monix = crossProject(JSPlatform, JVMPlatform)
+  .crossType(CrossType.Pure)
+  .settings(name := "meow-mtl-monix")
+  .settings(commonSettings: _*)
+  .settings(libraryDependencies ++= List(
+    "io.monix" %%% "monix-eval" % "3.0.0",
+    "org.typelevel" %%% "cats-effect-laws" % "2.0.0" % Test,
+  ))
 
 def commonSettings = List(
-  name := "meow-mtl",
 
   licenses += ("MIT", url("http://opensource.org/licenses/MIT")),
   homepage := Some(url("http://github.com/oleg-py/meow-mtl")),
 
-  dependencyOverrides +=
-    "org.typelevel" %%% "cats-core"   % "2.0.0-M4",
-  
   libraryDependencies ++= Seq(
-    "com.chuusai"   %%% "shapeless"     % "2.3.3",
-    "org.typelevel" %%% "cats-mtl-core" % "0.6.0",
-    "org.typelevel" %%% "cats-effect"   % "2.0.0-M4",
-    "org.typelevel" %%% "cats-laws"     % "2.0.0-M4" % Test,
-    "org.typelevel" %%% "cats-effect-laws" % "2.0.0-M4" % Test,
-    "io.monix"      %%% "minitest"      % "2.5.0" % Test,
-    "io.monix"      %%% "minitest-laws" % "2.5.0" % Test,
-    "org.typelevel" %%% "cats-mtl-laws" % "0.6.0" % Test,
+    "org.typelevel" %%% "cats-mtl-core" % "0.7.0",
+    "org.typelevel" %%% "cats-laws"     % "2.0.0" % Test,
+    "io.monix"      %%% "minitest"      % "2.7.0" % Test,
+    "io.monix"      %%% "minitest-laws" % "2.7.0" % Test,
+    "org.typelevel" %%% "cats-mtl-laws" % "0.7.0" % Test,
   ),
 
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
