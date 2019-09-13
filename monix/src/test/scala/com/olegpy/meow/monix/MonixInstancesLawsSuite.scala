@@ -11,7 +11,6 @@ import scala.concurrent.duration._
 
 import cats.Eq
 import _root_.monix.eval.{Task, TaskLike, TaskLocal}
-import _root_.monix.execution.Scheduler
 import _root_.monix.execution.schedulers.TestScheduler
 import org.scalacheck.{Arbitrary, Cogen, Gen}
 
@@ -53,9 +52,9 @@ object MonixInstancesLawsSuite extends SimpleTestSuite with Checkers {
     f.value.get.get
   }
 
-  checkAll("TaskLocal.runAsk") { implicit ctx =>
-    unsafeTaskLocal().runAsk(ev =>
-      ApplicativeAskTests(ev).applicativeAsk[Int])
+  checkAll("TaskLocal.runLocal") { implicit ctx =>
+    unsafeTaskLocal().runLocal(ev =>
+      ApplicativeLocalTests(ev).applicativeLocal[Int, String])
   }
 
   checkAll("TaskLocal.runState") { implicit ctx =>

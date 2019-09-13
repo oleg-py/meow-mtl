@@ -8,7 +8,7 @@ import monix.eval.TaskLocal
 import monix.eval.Task
 
 private[meow] object MonixMtlInstances {
-  class TaskLocalApplicativeAsk[E](taskLocal: TaskLocal[E])
+  class TaskLocalApplicativeLocal[E](taskLocal: TaskLocal[E])
     extends ApplicativeLocal[Task, E] {
     override def local[A](f: E => E)(fa: Task[A]): Task[A] =
       taskLocal.bindL(taskLocal.read map f)(fa)

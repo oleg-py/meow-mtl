@@ -2,7 +2,7 @@ package com.olegpy.meow
 
 import _root_.monix.eval.{Task, TaskLocal}
 import cats.Semigroup
-import cats.mtl.{ApplicativeAsk, FunctorTell, MonadState}
+import cats.mtl.{ApplicativeLocal, FunctorTell, MonadState}
 import internal.MonixMtlInstances._
 
 /**
@@ -16,11 +16,11 @@ package object monix {
     def stateInstance: MonadState[Task, A] =
       runState(identity)
 
-    def runAsk[B](f: ApplicativeAsk[Task, A] => B): B =
-      f(new TaskLocalApplicativeAsk(self))
+    def runLocal[B](f: ApplicativeLocal[Task, A] => B): B =
+      f(new TaskLocalApplicativeLocal(self))
 
-    def askInstance: ApplicativeAsk[Task, A] =
-      runAsk(identity)
+    def localInstance: ApplicativeLocal[Task, A] =
+      runLocal(identity)
 
     def runTell[B](f: FunctorTell[Task, A] => B)(implicit A: Semigroup[A]): B =
       f(new TaskLocalFunctorTell(self))

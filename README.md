@@ -4,21 +4,21 @@
 A catpanion library for [cats-mtl] and [cats-effect] providing:
 
 - Easy composition of MTL-style functions
-- MTL instances for cats-effect compatible datatypes (e.g. `IO`)
+- MTL instances for cats-effect compatible datatypes (e.g. `IO`) and monix TaskLocal
 - Conflict-free implicits for sub-instances (e.g. `MonadState` => `Monad`)
 
-Available for Scala 2.11 and 2.12, for Scala JVM and Scala.JS (0.6)
+Available for Scala 2.11, 2.12 and 2.13, for Scala JVM and Scala.JS (0.6)
 
 ```scala
 // Use %%% for scala.js or cross projects
-libraryDependencies += "com.olegpy" %% "meow-mtl" % "0.2.0"
+// Classy lenses derivation (requires shapeless)
+libraryDependencies += "com.olegpy" %% "meow-mtl-core" % "0.4.0"
+// MTL instances for cats-effect Ref and effectful functions
+libraryDependencies += "com.olegpy" %% "meow-mtl-effects" % "0.4.0"
+// MTL instances for TaskLocal
+libraryDependencies += "com.olegpy" %% "meow-mtl-monix" % "0.4.0"
 ```
 
-A milestone release is available for 2.11-2.13 that is based on cats and
-cats-effect `2.0.0-M4`:
-```scala
-libraryDependencies += "com.olegpy" %% "meow-mtl" % "0.3.0-M1"
-```
 
 Inspired by [Next-level MTL talk][mtl-talk] and discussions on cats gitter.
 
@@ -257,6 +257,46 @@ to ensure correct ordering:
  } yield ()
 ```
 
+### TaskLocal
+Similar to Ref, but with TaskLocal scoping it's possible to provide ApplicativeLocal
+
+#### Example: request context
+
+Here, you can build a middleware for a service that provides some additional data per call.
+This can be used for e.g. generating request IDs in HTTP server.
+
+
+```scala
+def service[F[_]: Monad](greeting: String, print: String => F[Unit])(implicit ev: ApplicativeAsk[F, String]): F[Unit] =
+  ev.ask.map(name => s"$greeting $name") >>= print
+
+def middleware[F[_]: Monad, A](getName: F[String])(service: F[Unit])(implicit ev: ApplicativeLocal[F, String]) =
+  getName.flatMap(n => ev.scope(n)(service))
+
+// Can be looking up something in external system, or random ID
+val getName = Task(if (Random.nextBoolean()) "Oleg" else "Olga")
+def putStrLn(s: String) = Task(println(s))
+
+val run =
+  for {
+    name <- TaskLocal("")
+    // note that you can create service separately from middleware,
+    // as long as they share the TaskLocal
+    svc  = name.runLocal { implicit ev =>
+      service[Task]("Hello,", putStrLn)
+    }
+    withRandomName = name.runLocal { implicit ev => middleware(getName) _ }
+    // and run them in another place entirely that doesn't know about TaskLocal
+    // Randomly prints "Hello, Oleg" or "Hello, Olga"
+    _ <- withRandomName(svc)
+    // prints "Hello, " since we don't set a context
+    _ <- svc
+  } yield ()
+
+
+// Don't forget to enable Local support!
+run.executeWithOptions(_.enableLocalContextPropagation)
+```
 
 ## Sub-instances
 meow-mtl also provides a set of implicits which let you use
