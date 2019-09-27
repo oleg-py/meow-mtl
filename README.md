@@ -22,6 +22,8 @@ libraryDependencies += "com.olegpy" %% "meow-mtl-monix" % "0.4.0"
 
 Inspired by [Next-level MTL talk][mtl-talk] and discussions on cats gitter.
 
+You can also see demonstration of techniques this library enables in [a post](https://typelevel.org/blog/2018/08/25/http4s-error-handling-mtl.html) or [a talk](https://www.youtube.com/watch?v=gYnbOUGpWK0) by [Gabriel Volpe](https://github.com/gvolpe)
+
 ### Quick Example
 ```scala
 
