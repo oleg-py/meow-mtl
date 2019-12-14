@@ -1,5 +1,5 @@
 # meow-mtl
-![Maven central](https://img.shields.io/maven-central/v/com.olegpy/meow-mtl_2.12.svg?style=flat-square)
+![Maven central](https://img.shields.io/maven-central/v/com.olegpy/meow-mtl-core_2.13.svg?style=flat-square)
 
 A catpanion library for [cats-mtl] and [cats-effect] providing:
 
