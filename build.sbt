@@ -3,9 +3,9 @@ import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 
 inThisBuild(Seq(
   organization := "com.olegpy",
-  scalaVersion := "2.13.0",
-  version := "0.4.0",
-  crossScalaVersions := Seq("2.11.12", "2.12.8", "2.13.0"),
+  scalaVersion := "2.13.3",
+  version := "0.4.1",
+  crossScalaVersions := Seq("2.12.12", "2.13.3"),
 ))
 
 lazy val root = project.in(file("."))
@@ -41,8 +41,8 @@ lazy val effects = crossProject(JSPlatform, JVMPlatform)
   .settings(name := "meow-mtl-effects")
   .settings(commonSettings)
   .settings(libraryDependencies ++= List(
-    "org.typelevel" %%% "cats-effect"   % "2.0.0",
-    "org.typelevel" %%% "cats-effect-laws" % "2.0.0" % Test,
+    "org.typelevel" %%% "cats-effect"   % "2.1.4",
+    "org.typelevel" %%% "cats-effect-laws" % "2.1.4" % Test,
   ))
 
 lazy val monix = crossProject(JSPlatform, JVMPlatform)
@@ -50,8 +50,8 @@ lazy val monix = crossProject(JSPlatform, JVMPlatform)
   .settings(name := "meow-mtl-monix")
   .settings(commonSettings: _*)
   .settings(libraryDependencies ++= List(
-    "io.monix" %%% "monix-eval" % "3.0.0",
-    "org.typelevel" %%% "cats-effect-laws" % "2.0.0" % Test,
+    "io.monix" %%% "monix-eval" % "3.2.2",
+    "org.typelevel" %%% "cats-effect-laws" % "2.1.4" % Test,
   ))
 
 def commonSettings = List(
@@ -60,14 +60,14 @@ def commonSettings = List(
   homepage := Some(url("http://github.com/oleg-py/meow-mtl")),
 
   libraryDependencies ++= Seq(
-    "org.typelevel" %%% "cats-mtl-core" % "0.7.0",
-    "org.typelevel" %%% "cats-laws"     % "2.0.0" % Test,
-    "io.monix"      %%% "minitest"      % "2.7.0" % Test,
-    "io.monix"      %%% "minitest-laws" % "2.7.0" % Test,
-    "org.typelevel" %%% "cats-mtl-laws" % "0.7.0" % Test,
+    "org.typelevel" %%% "cats-mtl-core" % "0.7.1",
+    "org.typelevel" %%% "cats-laws"     % "2.1.0" % Test,
+    "io.monix"      %%% "minitest"      % "2.8.2" % Test,
+    "io.monix"      %%% "minitest-laws" % "2.8.2" % Test,
+    "org.typelevel" %%% "cats-mtl-laws" % "0.7.1" % Test,
   ),
 
-  addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
+  addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full),
 
   testFrameworks += new TestFramework("minitest.runner.Framework"),
   scalacOptions --= Seq(
