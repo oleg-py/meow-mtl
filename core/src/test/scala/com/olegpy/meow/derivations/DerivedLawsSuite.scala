@@ -26,29 +26,29 @@ object DerivedLawsSuite extends SimpleTestSuite with Checkers {
 
   type Data = (Long, Int)
 
-  checkAll("MonadState") {
+  checkAll("Stateful") {
     type M[A] = State[Data, A]
-    def derive[F[_]](implicit MS: MonadState[F, Data]): MonadState[F, Int] =
+    def derive[F[_]](implicit MS: Stateful[F, Data]): Stateful[F, Int] =
       implicitly
 
     implicit def eqState[A: Eq]: Eq[M[A]] = Eq.by(_.run((0L, 0)))
-    MonadStateTests(derive[M]).monadState[Int]
+    StatefulTests(derive[M]).monadState[Int]
   }
 
-  checkAll("ApplicativeLocal") {
+  checkAll("Local") {
     type M[A] = Data => A
-    def derive[F[_]](implicit MS: ApplicativeLocal[F, Data]): ApplicativeLocal[F, Int] =
+    def derive[F[_]](implicit MS: Local[F, Data]): Local[F, Int] =
       implicitly
 
-    ApplicativeLocalTests(derive[M]).applicativeLocal[Int, String]
+    LocalTests(derive[M]).applicativeLocal[Int, String]
   }
 
-//  checkAll("ApplicativeAsk") {
+//  checkAll("Ask") {
 //    type M[A] = Data => A
-//    def derive[F[_]](implicit MS: ApplicativeAsk[F, Data]): ApplicativeAsk[F, Int] =
+//    def derive[F[_]](implicit MS: Ask[F, Data]): Ask[F, Int] =
 //      implicitly
 //
-//    ApplicativeAskTests(derive[M]).applicativeAsk[Int]
+//    AskTests(derive[M]).applicativeAsk[Int]
 //  }
 
   type DataC = Either[String, Either[Int, Long]]
@@ -71,12 +71,12 @@ object DerivedLawsSuite extends SimpleTestSuite with Checkers {
     ApplicativeErrorTests(derive[M]).applicativeError[Int, Long, String]
   }
 
-  checkAll("ApplicativeHandle") {
+  checkAll("Handle") {
     type M[A] = Either[DataC, A]
 
-    def derive[F[_]](implicit MS: ApplicativeHandle[F, DataC]): ApplicativeHandle[F, Long] =
+    def derive[F[_]](implicit MS: Handle[F, DataC]): Handle[F, Long] =
       implicitly
 
-    ApplicativeHandleTests(derive[M]).applicativeHandle[Int]
+    HandleTests(derive[M]).applicativeHandle[Int]
   }
 }

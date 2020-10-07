@@ -5,7 +5,7 @@ A catpanion library for [cats-mtl] and [cats-effect] providing:
 
 - Easy composition of MTL-style functions
 - MTL instances for cats-effect compatible datatypes (e.g. `IO`) and monix TaskLocal
-- Conflict-free implicits for sub-instances (e.g. `MonadState` => `Monad`)
+- Conflict-free implicits for sub-instances (e.g. `Stateful` => `Monad`)
 
 Available for Scala 2.11, 2.12 and 2.13, for Scala JVM and Scala.JS (0.6)
 
@@ -31,11 +31,11 @@ type Headers = Map[String, String]
 case class User(name: String)
 case class AuthedRequest(headers: Headers, user: User)
 
-def greetUser[F[_]: Functor](implicit F: MonadState[F, User]): F[String] = {
+def greetUser[F[_]: Functor](implicit F: Stateful[F, User]): F[String] = {
   F.get.map(user => s"Hello, ${user.name}")
 }
 
-def addRequestIdHeader[F[_]: Sync](implicit F: MonadState[F, Headers]): F[Unit] =
+def addRequestIdHeader[F[_]: Sync](implicit F: Stateful[F, Headers]): F[Unit] =
   for {
     id <- Sync[F].delay(UUID.randomUUID().toString)
     _  <- F.modify(_ + ("X-Request-ID" -> id))
@@ -49,14 +49,14 @@ functions directly:
 ```scala
 import com.olegpy.meow.hierarchy._
 
-def handleGreetRequest[F[_]: Sync](implicit F: MonadState[F, AuthedRequest]) =
+def handleGreetRequest[F[_]: Sync](implicit F: Stateful[F, AuthedRequest]) =
   for {
     _ <- addRequestIdHeader[F]
     r <- greetUser[F]
   } yield r
 ```
 
-To get that `MonadState` instance, it's possible to use `StateT`
+To get that `Stateful` instance, it's possible to use `StateT`
 transformer. But meow-mtl allows you to use `Ref` from cats-effect
 instead, yielding better performance. So at the edge of your application
 it is possible to do this:
@@ -101,8 +101,8 @@ As another neat example, generated typeclasses can be used as ad-hoc lenses
 case class Part(int: Int)
 case class Whole(part: Part)
 
-def modify[F[_]: MonadState[?[_], Whole]] =
-  MonadState[F, Part].set(Part(42)) // automatically "zooms" into Whole.part
+def modify[F[_]: Stateful[?[_], Whole]] =
+  Stateful[F, Part].set(Part(42)) // automatically "zooms" into Whole.part
 ```
 
 ### High-level API: automatic derivation
@@ -121,13 +121,13 @@ Supported typeclasses:
 | Typeclass         | Required optic |
 |-------------------|----------------|
 | ApplicativeError  | Prism          |
-| ApplicativeHandle | Prism          |
+| Handle | Prism          |
 | MonadError        | Prism          |
-| FunctorRaise      | Prism          |
-| FunctorTell       | Prism          |
-| ApplicativeAsk    | Lens           |
-| ApplicativeLocal  | Lens           |
-| MonadState        | Lens           |
+| Raise      | Prism          |
+| Tell       | Prism          |
+| Ask    | Lens           |
+| Local  | Lens           |
+| Stateful        | Lens           |
 
 #### IMPORTANT!
 
@@ -186,7 +186,7 @@ receive an instance, i.e.:
 ```scala
 // `unsafe` is used for the sake of an example. I don't recommend doing that.
 Ref.unsafe[IO, Int](0).runAsk { implicit askInstance =>
-  ??? // ApplicativeAsk[IO, Int] is available in this scope
+  ??? // Ask[IO, Int] is available in this scope
 }
 ```
 
@@ -194,16 +194,16 @@ Alternatively, you can pull it out with specific methods if you intend
 to use it explicitly or with better-monadic-for implicit patterns:
 
 ```scala
-implicit val instance: MonadState[IO, Int] =
+implicit val instance: Stateful[IO, Int] =
   Ref.unsafe[IO, Int](0).stateInstance
 
-// MonadState available below
+// Stateful available below
 ???
 ```
 
 ### Ref
 `Ref` is a referentially transparent variable added in cats-effect
-1.0.0-RC2. It supports `MonadState`, `ApplicativeAsk` and `FunctorTell`
+1.0.0-RC2. It supports `Stateful`, `Ask` and `Tell`
 effects (the latest requires a `Semigroup` instance for type of
 contained data).
 
@@ -212,11 +212,11 @@ Instances are provided by extension methods `runState`, `runAsk` and
 
 #### Example: counter
 
-This is a simple example of using `MonadState` instance of `Ref`. Note
+This is a simple example of using `Stateful` instance of `Ref`. Note
 how updated state can be retrieved from `ref` after executing operation.
 
 ```scala
-def getAndIncrement[F[_]: Apply](implicit MS: MonadState[F, Int]) =
+def getAndIncrement[F[_]: Apply](implicit MS: Stateful[F, Int]) =
   MS.get <* MS.modify(_ + 1)
 
 
@@ -232,7 +232,7 @@ for {
 ### Consumer
 
 `Consumer` is a simple wrapper around `A => F[Unit]`. It supports a
-single effect - `FunctorTell`, and can be used for things like logging,
+single effect - `Tell`, and can be used for things like logging,
 persistence, notifications, etc.
 
 `Consumer` instances are constructed with `apply` method on a companion.
@@ -244,7 +244,7 @@ That logger only waits if a previous message is still being processed,
 to ensure correct ordering:
 
 ```scala
- def greeter(name: String)(implicit ev: FunctorTell[IO, String]): IO[Unit] =
+ def greeter(name: String)(implicit ev: Tell[IO, String]): IO[Unit] =
    ev.tell(s"Long time no see, \$name") >> IO.sleep(1.second)
 
  def forever[A](ioa: IO[A]): IO[Nothing] = ioa >> forever(ioa)
@@ -260,7 +260,7 @@ to ensure correct ordering:
 ```
 
 ### TaskLocal
-Similar to Ref, but with TaskLocal scoping it's possible to provide ApplicativeLocal
+Similar to Ref, but with TaskLocal scoping it's possible to provide Local
 
 #### Example: request context
 
@@ -269,10 +269,10 @@ This can be used for e.g. generating request IDs in HTTP server.
 
 
 ```scala
-def service[F[_]: Monad](greeting: String, print: String => F[Unit])(implicit ev: ApplicativeAsk[F, String]): F[Unit] =
+def service[F[_]: Monad](greeting: String, print: String => F[Unit])(implicit ev: Ask[F, String]): F[Unit] =
   ev.ask.map(name => s"$greeting $name") >>= print
 
-def middleware[F[_]: Monad, A](getName: F[String])(service: F[Unit])(implicit ev: ApplicativeLocal[F, String]) =
+def middleware[F[_]: Monad, A](getName: F[String])(service: F[Unit])(implicit ev: Local[F, String]) =
   getName.flatMap(n => ev.scope(n)(service))
 
 // Can be looking up something in external system, or random ID
@@ -303,7 +303,7 @@ run.executeWithOptions(_.enableLocalContextPropagation)
 ## Sub-instances
 meow-mtl also provides a set of implicits which let you use
 `Monad`/`Applicative`/`Functor` instances if you have an MTL instance of
-compatible type (e.g. `MonadState`/`ApplicativeAsk`/`FunctorTell`)
+compatible type (e.g. `Stateful`/`Ask`/`Tell`)
 
 ```scala
 import cats.implicits._
@@ -311,7 +311,7 @@ import com.olegpy.meow.prelude._ // just this one import
 
 // Can use pure and flatTap without having a Monad constraint or pull
 // it out manually
-def test[F[_]](implicit MS: MonadState[F, Int]): F[Int] =
+def test[F[_]](implicit MS: Stateful[F, Int]): F[Int] =
   42.pure[F].flatTap(MS.set)
 ```
 
@@ -320,8 +320,8 @@ a constraint does not result in ambiguities:
 
 ```scala
 import cats.effect.Sync
-// Uses Sync as a Monad instance, instead of getting it from MonadState
-def test2[F[_]: Sync](implicit MS: MonadState[F, Int]): F[Int] =
+// Uses Sync as a Monad instance, instead of getting it from Stateful
+def test2[F[_]: Sync](implicit MS: Stateful[F, Int]): F[Int] =
   42.pure[F].flatTap(MS.set)
 ```
 

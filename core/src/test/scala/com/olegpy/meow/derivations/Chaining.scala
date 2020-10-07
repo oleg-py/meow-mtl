@@ -12,8 +12,8 @@ object Chaining {
   case class StateComponent(nested: (String, Inner))
   case class State(number: Int, other: StateComponent)
 
-  def testState[F[_]](implicit ev: MonadState[F, State]): Unit = {
-    def derives[S](implicit ev: MonadState[F, S]): Unit = ()
+  def testState[F[_]](implicit ev: Stateful[F, State]): Unit = {
+    def derives[S](implicit ev: Stateful[F, S]): Unit = ()
 
     derives[State]
     derives[Inner]
@@ -23,8 +23,8 @@ object Chaining {
     derives[Long]
   }
 
-  def testLocal[F[_]](implicit ev: ApplicativeLocal[F, State]): Unit = {
-    def derives[S](implicit ev: ApplicativeLocal[F, S]): Unit = ()
+  def testLocal[F[_]](implicit ev: Local[F, State]): Unit = {
+    def derives[S](implicit ev: Local[F, S]): Unit = ()
 
     derives[State]
     derives[Inner]
@@ -34,8 +34,8 @@ object Chaining {
     derives[Long]
   }
 
-  def testAsk[F[_]](implicit ev: ApplicativeAsk[F, State]): Unit = {
-    def derives[S](implicit ev: ApplicativeAsk[F, S]): Unit = ()
+  def testAsk[F[_]](implicit ev: Ask[F, State]): Unit = {
+    def derives[S](implicit ev: Ask[F, S]): Unit = ()
 
     derives[State]
     derives[Inner]
@@ -72,8 +72,8 @@ object Chaining {
     derives[String]
   }
 
-  def testFunctorRaise[F[_]](implicit ev: FunctorRaise[F, AppError]): Unit = {
-    def derives[S](implicit ev: FunctorRaise[F, S]): Unit = ()
+  def testRaise[F[_]](implicit ev: Raise[F, AppError]): Unit = {
+    def derives[S](implicit ev: Raise[F, S]): Unit = ()
 
     derives[ADbError]
     derives[DbError]
@@ -82,8 +82,8 @@ object Chaining {
     derives[String]
   }
 
-  def testFunctorTell[F[_]](implicit ev: FunctorTell[F, AppError]): Unit = {
-    def derives[S](implicit ev: FunctorTell[F, S]): Unit = ()
+  def testTell[F[_]](implicit ev: Tell[F, AppError]): Unit = {
+    def derives[S](implicit ev: Tell[F, S]): Unit = ()
 
     derives[ADbError]
     derives[DbError]

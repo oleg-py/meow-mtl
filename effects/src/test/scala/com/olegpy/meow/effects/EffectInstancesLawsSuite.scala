@@ -25,19 +25,19 @@ object EffectInstancesLawsSuite extends SimpleTestSuite with Checkers {
 
   checkAll("Ref.runAsk") { implicit ctx =>
     Ref.unsafe[IO, Int](0).runAsk(ev =>
-      ApplicativeAskTests(ev).applicativeAsk[Int]
+      AskTests(ev).ask[Int]
     )
   }
 
   checkAll("Ref.runState") { implicit ctx =>
     Ref.unsafe[IO, Int](0).runState(ev =>
-      MonadStateTests(ev).monadState[Int]
+      StatefulTests(ev).stateful[Int]
     )
   }
 
   checkAll("Ref.runTell") { implicit ctx =>
     Ref.unsafe[IO, Int](0).runTell(ev =>
-      FunctorTellTests(ev).functorTell[Int]
+      TellTests(ev).tell[Int]
     )
   }
 
@@ -47,7 +47,7 @@ object EffectInstancesLawsSuite extends SimpleTestSuite with Checkers {
       if (x == 1) IO.raiseError[Unit](DummyErr)
       else IO.unit
     Consumer(fun _).runTell(ev =>
-      FunctorTellTests(ev).functorTell[Int]
+      TellTests(ev).tell[Int]
     )
 
   }

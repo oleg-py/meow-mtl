@@ -8,23 +8,23 @@ import cats.syntax.semigroup._
 import cats.{Applicative, Functor, Monad}
 
 private[meow] object CatsEffectMtlInstances {
-  class RefMonadState[F[_]: Monad, S](ref: Ref[F, S]) extends MonadState[F, S] {
+  class RefStateful[F[_]: Monad, S](ref: Ref[F, S]) extends Stateful[F, S] {
     val monad: Monad[F] = implicitly
     def get: F[S] = ref.get
     def set(s: S): F[Unit] = ref.set(s)
-    def inspect[A](f: S => A): F[A] = ref.get.map(f)
-    def modify(f: S => S): F[Unit] = ref.update(f)
+    override def inspect[A](f: S => A): F[A] = ref.get.map(f)
+    override def modify(f: S => S): F[Unit] = ref.update(f)
   }
 
-  class RefFunctorTell[F[_]: Functor, L: Semigroup](ref: Ref[F, L])
-    extends FunctorTell[F, L] with DefaultFunctorTell[F, L] {
+  class RefTell[F[_]: Functor, L: Semigroup](ref: Ref[F, L])
+    extends Tell[F, L] {
     val functor: Functor[F] = implicitly
     def tell(l: L): F[Unit] = ref.update(_ |+| l)
   }
 
-  class RefApplicativeAsk[F[_]: Applicative, S](ref: Ref[F, S])
-    extends ApplicativeAsk[F, S] with DefaultApplicativeAsk[F, S] {
+  class RefAsk[F[_]: Applicative, S](ref: Ref[F, S])
+    extends Ask[F, S] {
     val applicative: Applicative[F] = implicitly
-    def ask: F[S] = ref.get
+    def ask[S2 >: S]: F[S2] = ref.get.widen
   }
 }

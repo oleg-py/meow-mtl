@@ -1,16 +1,15 @@
 package com.olegpy.meow.internal
 
-import cats.mtl.ApplicativeAsk
+import cats.mtl.Ask
 import cats.syntax.all._
 import shapeless.Lens
 
 object AskOptics {
   class Applicative[F[_], E, A](
-    parent: ApplicativeAsk[F, E],
+    parent: Ask[F, E],
     lens: Lens[E, A]
-  ) extends ApplicativeAsk[F, A] {
+  ) extends Ask[F, A] {
     implicit val applicative: cats.Applicative[F] = parent.applicative
-    def ask: F[A] = parent.ask map lens.get
-    def reader[B](f: A => B): F[B] = parent.reader(f compose lens.get)
+    def ask[A2 >: A]: F[A2] = parent.ask map lens.get
   }
 }
