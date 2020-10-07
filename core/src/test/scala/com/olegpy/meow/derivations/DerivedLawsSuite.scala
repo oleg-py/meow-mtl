@@ -8,13 +8,11 @@ import minitest._
 import minitest.laws.Checkers
 import org.typelevel.discipline.Laws
 import com.olegpy.meow.hierarchy._
-import cats.mtl.instances.all._
 import cats.mtl.laws.discipline._
 import cats.laws.discipline._
 import cats.laws.discipline.arbitrary._
 import cats.laws.discipline.eq._
-import cats.laws.discipline.DeprecatedEqInstances._
-
+import cats.Applicative
 
 object DerivedLawsSuite extends SimpleTestSuite with Checkers {
   private def checkAll(name: String)(ruleSet: Laws#RuleSet) = {
@@ -24,32 +22,32 @@ object DerivedLawsSuite extends SimpleTestSuite with Checkers {
       }
   }
 
-  type Data = (Long, Int)
+  type Data = (MiniInt, Boolean)
+
+  //temporarily stolen from https://github.com/typelevel/cats-mtl/pull/262/files
+  implicit def localForFunction[E]: Local[E => *, E] =
+    new Local[E => *, E] {
+      def local[A](fa: E => A)(f: E => E): E => A = fa compose f
+      val applicative: Applicative[E => *] = Applicative[E => *]
+      def ask[E2 >: E]: E => E2 = identity[E]
+    }
 
   checkAll("Stateful") {
     type M[A] = State[Data, A]
-    def derive[F[_]](implicit MS: Stateful[F, Data]): Stateful[F, Int] =
+    def derive[F[_]](implicit MS: Stateful[F, Data]): Stateful[F, MiniInt] =
       implicitly
 
-    implicit def eqState[A: Eq]: Eq[M[A]] = Eq.by(_.run((0L, 0)))
-    StatefulTests(derive[M]).monadState[Int]
+    implicit def eqState[A: Eq]: Eq[M[A]] = Eq.by(_.run((MiniInt.zero, false)))
+    StatefulTests(derive[M]).stateful[Int]
   }
 
   checkAll("Local") {
     type M[A] = Data => A
-    def derive[F[_]](implicit MS: Local[F, Data]): Local[F, Int] =
+    def derive[F[_]](implicit MS: Local[F, Data]): Local[F, MiniInt] =
       implicitly
 
-    LocalTests(derive[M]).applicativeLocal[Int, String]
+    LocalTests(derive[M]).local[MiniInt, String]
   }
-
-//  checkAll("Ask") {
-//    type M[A] = Data => A
-//    def derive[F[_]](implicit MS: Ask[F, Data]): Ask[F, Int] =
-//      implicitly
-//
-//    AskTests(derive[M]).applicativeAsk[Int]
-//  }
 
   type DataC = Either[String, Either[Int, Long]]
 
@@ -77,6 +75,6 @@ object DerivedLawsSuite extends SimpleTestSuite with Checkers {
     def derive[F[_]](implicit MS: Handle[F, DataC]): Handle[F, Long] =
       implicitly
 
-    HandleTests(derive[M]).applicativeHandle[Int]
+    HandleTests(derive[M]).handle[Int]
   }
 }

@@ -1,7 +1,6 @@
 package com.olegpy.meow.derivations
 
 import cats.mtl.Handle
-import cats.mtl.instances.all._
 import cats.instances.all._
 import cats.syntax.either._
 import com.olegpy.meow.hierarchy._

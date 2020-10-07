@@ -33,17 +33,17 @@ object Chaining {
     derives[Int]
     derives[Long]
   }
+  // todo
+  // def testAsk[F[_]](implicit ev: Ask[F, State]): Unit = {
+  //   def derives[S](implicit ev: Ask[F, S]): Unit = ()
 
-  def testAsk[F[_]](implicit ev: Ask[F, State]): Unit = {
-    def derives[S](implicit ev: Ask[F, S]): Unit = ()
-
-    derives[State]
-    derives[Inner]
-    derives[StateComponent]
-    derives[String]
-    derives[Int]
-    derives[Long]
-  }
+  //   derives[State]
+  //   derives[Inner]
+  //   derives[StateComponent]
+  //   derives[String]
+  //   derives[Int]
+  //   derives[Long]
+  // }
 
   case class DbError(text: String)
   sealed trait NetworkError

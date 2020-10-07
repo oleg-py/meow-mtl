@@ -4,7 +4,6 @@ import cats._
 import cats.data._
 import cats.mtl.Ask._
 import cats.mtl._
-import cats.mtl.instances.all._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import com.olegpy.meow.hierarchy._
@@ -32,17 +31,19 @@ object Main {
   ](s: String): F[Unit] =
     askF[F]().map(_.server + s).map(println)
 
-  def readAndSend[
-  F[_]: Monad : Raise[*[_], AppError] : Ask[*[_], AppConfig]
-  ]: F[Unit] = for {
-    s <- readFromDb[F]
-    _ <- sendToNetwork[F](s)
-  } yield ()
+  //todo
+  // def readAndSend[
+  // F[_]: Monad : Raise[*[_], AppError] : Ask[*[_], AppConfig]
+  // ]: F[Unit] = for {
+  //   s <- readFromDb[F]
+  //   _ <- sendToNetwork[F](s)
+  // } yield ()
 
   def main(args: Array[String]): Unit = {
     type T[X] = EitherT[Reader[AppConfig, *], AppError, X]
     val start = AppConfig(DbConfig("db"), NetworkConfig("nc"))
-    readAndSend[T].value(start)
+    //todo
+    // readAndSend[T].value(start)
 
     println("hoi")
   }
