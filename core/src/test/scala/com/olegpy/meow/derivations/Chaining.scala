@@ -1,8 +1,8 @@
 package com.olegpy.meow.derivations
 
-import cats.{ApplicativeError, MonadError}
+import cats.ApplicativeError
+import cats.MonadError
 import cats.mtl._
-
 
 // This is a compile-time suite. If it compiles, it's fine.
 object Chaining {
@@ -11,6 +11,8 @@ object Chaining {
   case class Inner(test: Long)
   case class StateComponent(nested: (String, Inner))
   case class State(number: Int, other: StateComponent)
+
+  implicit def ask: Ask[List, State] = ???
 
   def testState[F[_]](implicit ev: Stateful[F, State]): Unit = {
     def derives[S](implicit ev: Stateful[F, S]): Unit = ()
@@ -33,17 +35,18 @@ object Chaining {
     derives[Int]
     derives[Long]
   }
-  // todo
-  // def testAsk[F[_]](implicit ev: Ask[F, State]): Unit = {
-  //   def derives[S](implicit ev: Ask[F, S]): Unit = ()
 
-  //   derives[State]
-  //   derives[Inner]
-  //   derives[StateComponent]
-  //   derives[String]
-  //   derives[Int]
-  //   derives[Long]
-  // }
+  // todo
+  def testAsk[F[_]](implicit ev: Ask[F, State]): Unit = {
+    def derives[S](implicit ev: Ask[F, S]): Unit = ()
+
+    derives[State]
+    derives[Inner]
+    derives[StateComponent]
+    derives[String]
+    derives[Int]
+    derives[Long]
+  }
 
   case class DbError(text: String)
   sealed trait NetworkError
@@ -91,4 +94,5 @@ object Chaining {
     derives[NetworkError]
     derives[String]
   }
+
 }

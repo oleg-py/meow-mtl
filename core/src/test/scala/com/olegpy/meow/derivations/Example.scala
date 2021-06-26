@@ -21,30 +21,26 @@ final case class ANetworkError(e: NetworkError) extends AppError
 
 // This example serves as a compile-time test too.
 object Main {
-  def readFromDb[
-  F[_]: Functor : Raise[*[_], DbError] : Ask[*[_], DbConfig]
-  ]: F[String] =
+  def readFromDb[F[_]: Functor: Raise[*[_], DbError]: Ask[*[_], DbConfig]]: F[String] =
     askF[F]().map(_.dbName)
 
-  def sendToNetwork[
-  F[_]: Functor : Raise[*[_], NetworkError] : Ask[*[_], NetworkConfig]
-  ](s: String): F[Unit] =
+  def sendToNetwork[F[_]: Functor: Raise[*[_], NetworkError]: Ask[*[_], NetworkConfig]](s: String): F[Unit] =
     askF[F]().map(_.server + s).map(println)
 
   //todo
-  // def readAndSend[
-  // F[_]: Monad : Raise[*[_], AppError] : Ask[*[_], AppConfig]
-  // ]: F[Unit] = for {
-  //   s <- readFromDb[F]
-  //   _ <- sendToNetwork[F](s)
-  // } yield ()
+  def readAndSend[F[_]: Monad: Raise[*[_], AppError]: Ask[*[_], AppConfig]]: F[Unit] =
+    for {
+      s <- readFromDb[F]
+      _ <- sendToNetwork[F](s)
+    } yield ()
 
   def main(args: Array[String]): Unit = {
     type T[X] = EitherT[Reader[AppConfig, *], AppError, X]
     val start = AppConfig(DbConfig("db"), NetworkConfig("nc"))
     //todo
-    // readAndSend[T].value(start)
+    readAndSend[T].value(start)
 
     println("hoi")
   }
+
 }
