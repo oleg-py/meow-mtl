@@ -27,7 +27,6 @@ object Main {
   def sendToNetwork[F[_]: Functor: Raise[*[_], NetworkError]: Ask[*[_], NetworkConfig]](s: String): F[Unit] =
     askF[F]().map(_.server + s).map(println)
 
-  //todo
   def readAndSend[F[_]: Monad: Raise[*[_], AppError]: Ask[*[_], AppConfig]]: F[Unit] =
     for {
       s <- readFromDb[F]
@@ -37,7 +36,6 @@ object Main {
   def main(args: Array[String]): Unit = {
     type T[X] = EitherT[Reader[AppConfig, *], AppError, X]
     val start = AppConfig(DbConfig("db"), NetworkConfig("nc"))
-    //todo
     readAndSend[T].value(start)
 
     println("hoi")

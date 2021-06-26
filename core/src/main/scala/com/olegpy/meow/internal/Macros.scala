@@ -77,7 +77,7 @@ object Macros {
       true
     }
 
-    // this is technically wrong, because if we found more than one we should emit ambiguous implicit error or sth
+    // TODO: this is technically wrong, because if we found more than one we should emit ambiguous implicit error or sth
     val parent = potentialParents find isParent
 
     if (parent.isEmpty) abortExpansion("did not find a suitable parent type")

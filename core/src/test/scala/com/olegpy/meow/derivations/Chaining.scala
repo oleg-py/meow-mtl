@@ -36,10 +36,10 @@ object Chaining {
     derives[Long]
   }
 
-  // todo
   def testAsk[F[_]](implicit ev: Ask[F, State]): Unit = {
     def derives[S](implicit ev: Ask[F, S]): Unit = ()
 
+    derives[Any]
     derives[State]
     derives[Inner]
     derives[StateComponent]
