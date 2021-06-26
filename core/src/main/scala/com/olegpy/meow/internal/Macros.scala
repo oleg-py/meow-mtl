@@ -1,90 +1,117 @@
 package com.olegpy.meow.internal
 
+import cats.Id
 import cats.mtl.Ask
+import cats.mtl.Raise
+import cats.mtl.Tell
 import com.olegpy.meow.optics.MkLensToType
+import com.olegpy.meow.optics.MkPrismToType
 
 import scala.reflect.macros.whitebox
+import scala.reflect.macros.runtime
 import scala.language.experimental.macros
 
 object Macros {
 
-  def deriveAsk[F[_], A](c: whitebox.Context)(implicit F: c.WeakTypeTag[F[A]]): c.Expr[Ask[F, A]] = {
+  def deriveAsk[F[_], E](c: whitebox.Context): c.Expr[Ask[F, E]] = {
     import c.universe._
 
-    if (c.enclosingMacros.size > 1)
-      throw new RuntimeException(
-        "nope, either we're recursing ourselves into a stack overflow or some other macro is calling us, to which we politely say frig off"
-      )
-
-    val lensTypeTag = implicitly[c.WeakTypeTag[MkLensToType[Any, A]]].tpe
-
-    val requestedType = c.openImplicits.head.pt
-
-    val A = requestedType.typeArgs(1)
+    if (c.enclosingMacros.size > 1) abortExpansion("unsupported recursive call")
 
     // yes, we're importing compiler internals
-    import scala.tools.nsc.Global
-    val evil = c.universe.asInstanceOf[Global]
+    val cc = c.asInstanceOf[runtime.Context]
+    val global: cc.universe.type = cc.universe
+    val analyzer: global.analyzer.type = global.analyzer
 
-    import evil.analyzer.ImplicitSearch
-    import evil.analyzer.SearchResult
+    val requestedType = c.openImplicits.head.pt.asInstanceOf[global.Type]
 
-    val lensS = lensTypeTag.typeConstructor.typeParams(0).asInstanceOf[evil.Symbol]
-    val lensA = lensTypeTag.typeConstructor.typeParams(1).asInstanceOf[evil.Symbol]
+    val actualF = requestedType.typeArgs(0)
+    val actualE = requestedType.typeArgs(1)
 
-    val f = c.getClass.getDeclaredField("callsiteTyper")
-    f.setAccessible(true)
-    val existingSearch = f.get(c).asInstanceOf[ImplicitSearch]
+    val typer = cc.callsiteTyper
 
-    val ask = existingSearch.pt.typeConstructor
-    val askF = ask.typeParams(0)
-    val askA = ask.typeParams(1)
+    val typeclass = requestedType.typeConstructor
+    val typeclassF = typeclass.typeParams(0)
+    val typeclassE = typeclass.typeParams(1)
 
-    val tree = existingSearch.tree
-    val ctx = existingSearch.context0
-    val pt = ask.instantiateTypeParams(List(askF, askA), List(evil.WildcardType, evil.WildcardType))
-    val pos = existingSearch.pos
+    val opticsTypeConstructor =
+      if (typeclassE.isCovariant)
+        implicitly[c.WeakTypeTag[MkLensToType[Any, Any]]].tpe.typeConstructor.asInstanceOf[global.Type]
+      else if (typeclassE.isContravariant)
+        implicitly[c.WeakTypeTag[MkPrismToType[Any, Any]]].tpe.typeConstructor.asInstanceOf[global.Type]
+      else
+        abortExpansion("type classes with invariant second type param are unsupported")
 
-    val search = new ImplicitSearch(tree, pt, false, ctx, pos)
-    val potentialWinners = search.allImplicits
+    val opticsS = opticsTypeConstructor.typeParams(0)
+    val opticsA = opticsTypeConstructor.typeParams(1)
 
-    var mkLens: Option[Tree] = None
+    val ctx = typer.context.makeImplicit(false)
+    val potentialParentType = typeclass.instantiateTypeParams(List(typeclassF, typeclassE), List(global.WildcardType, global.WildcardType))
+    val position = c.enclosingPosition.asInstanceOf[global.Position]
 
-    def isWinner(sr: SearchResult): Boolean = {
+    val search = new analyzer.ImplicitSearch(cc.macroApplication, potentialParentType, false, ctx, position)
+    val potentialParents = search.allImplicits
+
+    var mkOptic: Option[Tree] = None
+
+    def isParent(sr: analyzer.SearchResult): Boolean = {
       if (sr.isFailure) return false
       val typ = sr.tree.tpe
-      if (typ.typeArgs.head.normalize != F.tpe.normalize) return false
+      if (typ.typeArgs.head.normalize != actualF.normalize) return false
 
       val stateType = typ.typeArgs(1)
-      if (!hasSomewhereInside(stateType, A)) return false
+      if (stateType.normalize == actualE.normalize) abortExpansion("better implicit in scope") // otherwise ambiguity in 2.12
+      if (!canBeFocused(stateType)) return false
 
       true
     }
 
-    def hasSomewhereInside(stateType: evil.Type, elementType: c.Type): Boolean = {
-      val lens = lensTypeTag
-        .typeConstructor
-        .asInstanceOf[evil.Type]
-        .instantiateTypeParams(List(lensS, lensA), List(stateType, elementType.asInstanceOf[evil.Type]))
+    def canBeFocused(stateType: global.Type): Boolean = {
+      val lensType = opticsTypeConstructor.instantiateTypeParams(List(opticsS, opticsA), List(stateType, actualE)).asInstanceOf[c.Type]
 
-      val inferredLens = evil.analyzer.inferImplicitByTypeSilent(lens, ctx, pos)
-      if (inferredLens.isFailure) return false
+      val inferredLens = c.inferImplicitValue(lensType)
+      if (inferredLens.isEmpty) return false
 
-      mkLens = Some(inferredLens.tree.asInstanceOf[c.Tree])
+      mkOptic = Some(inferredLens)
 
       true
     }
 
-    val parent = potentialWinners find isWinner
+    // this is technically wrong, because if we found more than one we should emit ambiguous implicit error or sth
+    val parent = potentialParents find isParent
 
-    if (parent.isEmpty) throw new RuntimeException("did not find a suitable parent type")
+    if (parent.isEmpty) abortExpansion("did not find a suitable parent type")
 
-    val p = parent.get.tree.asInstanceOf[c.Tree]
-    val l = mkLens.get
+    val parentTree = parent.get.tree.asInstanceOf[c.Tree]
+    val parentE = parentTree.tpe.typeArgs(1).asInstanceOf[global.Type]
+    val optics = mkOptic.get
+    val typeclassImpl = toImpl(cc)(typeclass, actualF, parentE, actualE).asInstanceOf[c.Type]
 
-    c.Expr[Ask[F, A]](q"""
-      new _root_.com.olegpy.meow.internal.AskOptics.Applicative($p, $l())
-    """)
+    val tree = q"""
+      new $typeclassImpl($parentTree, $optics())
+    """
+
+    c.Expr[Ask[F, E]](tree)
   }
+
+  private def toImpl(c: runtime.Context)(typeclass: c.Type, F: c.Type, E: c.Type, A: c.Type): c.Type = {
+    val Ask = implicitly[c.WeakTypeTag[Ask[Id, Unit]]].tpe.typeConstructor
+    val Tell = implicitly[c.WeakTypeTag[Tell[Id, Unit]]].tpe.typeConstructor
+    val Raise = implicitly[c.WeakTypeTag[Raise[Id, Unit]]].tpe.typeConstructor
+
+    val impl = typeclass match {
+      case Ask   => implicitly[c.WeakTypeTag[AskOptics.Applicative[Id, Unit, Unit]]].tpe
+      case Tell  => implicitly[c.WeakTypeTag[TellOptics.Functor[Id, Unit, Unit]]].tpe
+      case Raise => implicitly[c.WeakTypeTag[RaiseOptics.Functor[Id, Unit, Unit]]].tpe
+      case t     => println(s"unsupported typeclass $t"); abortExpansion(s"unsupported typeclass $t")
+    }
+
+    val cons = impl.typeConstructor
+
+    cons.instantiateTypeParams(cons.typeParams, List(F, E, A))
+  }
+
+  // I don't think this is ever seen by the user when compiling, just here for code clarity...
+  private def abortExpansion(message: String = "<no message>"): Nothing = throw new RuntimeException(s"aborting macro expansion: $message")
 
 }
