@@ -32,7 +32,7 @@ private[meow] object DerivedHierarchy {
       implicit
       isAbstractF: IsAbstract[F],
       parent: Tell[F, S],
-      neq: S =:!= A,
+      neq: A <:!< S,
       mkPrismToType: MkPrismToType[S, A]
     ): Tell[F, A] =
       new TellOptics.Functor(parent, mkPrismToType())
@@ -72,7 +72,7 @@ private[meow] object DerivedHierarchy {
 //    ): Ask[F, A] =
 //      new AskOptics.Applicative(parent, mkLensToType())
 
-    implicit def deriveAsk[F[_], A]: Ask[F, A] = macro Macros.deriveAsk[F, A]
+    implicit def deriveAsk[F[_], A]: Ask[F, A] = macro Macros.deriveTypeclassFromParent[Ask[F, A]]
 
     implicit def deriveApplicativeError[F[_], S, A](
       implicit
@@ -100,7 +100,7 @@ private[meow] object DerivedHierarchy {
       implicit
       isAbstractF: IsAbstract[F],
       parent: Raise[F, S],
-      neq: S =:!= A,
+      neq: A <:!< S,
       mkPrismToType: MkPrismToType[S, A]
     ): Raise[F, A] =
       new RaiseOptics.Functor(parent, mkPrismToType())

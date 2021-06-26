@@ -13,7 +13,7 @@ import scala.language.experimental.macros
 
 object Macros {
 
-  def deriveAsk[F[_], E](c: whitebox.Context): c.Expr[Ask[F, E]] = {
+  def deriveTypeclassFromParent[TApl](c: whitebox.Context)(implicit tt: c.WeakTypeTag[TApl]): c.Expr[TApl] = {
     import c.universe._
 
     if (c.enclosingMacros.size > 1) abortExpansion("unsupported recursive call")
@@ -69,10 +69,10 @@ object Macros {
     def canBeFocused(stateType: global.Type): Boolean = {
       val lensType = opticsTypeConstructor.instantiateTypeParams(List(opticsS, opticsA), List(stateType, actualE)).asInstanceOf[c.Type]
 
-      val inferredLens = c.inferImplicitValue(lensType)
-      if (inferredLens.isEmpty) return false
+      val inferredOptic = c.inferImplicitValue(lensType)
+      if (inferredOptic.isEmpty) return false
 
-      mkOptic = Some(inferredLens)
+      mkOptic = Some(inferredOptic)
 
       true
     }
@@ -91,7 +91,16 @@ object Macros {
       new $typeclassImpl($parentTree, $optics())
     """
 
-    c.Expr[Ask[F, E]](tree)
+    val possibleErr =
+      try c.typecheck(tree)
+      catch { case e => e }
+
+    def keepVar[T](t: T) = ()
+    keepVar(possibleErr)
+
+    val expr = c.Expr[TApl](tree)
+
+    expr
   }
 
   private def toImpl(c: runtime.Context)(typeclass: c.Type, F: c.Type, E: c.Type, A: c.Type): c.Type = {
