@@ -15,13 +15,12 @@ object Macros {
     if (c.enclosingMacros.size > 1) abortExpansion("unsupported recursive call")
 
     val ask = c.openImplicits.head.pt
-    val invariantAsk = appliedType(implicitly[c.WeakTypeTag[AskOptics.Invariant[Id, Any]]].tpe, ask.typeArgs)
+    val invariantAsk = appliedType(weakTypeOf[AskOptics.Invariant[Id, Any]], ask.typeArgs)
 
     val foundImplicit = c.inferImplicitValue(invariantAsk)
     if (foundImplicit.isEmpty) abortExpansion("found no suitable implicits")
 
-    val invariantObject = implicitly[c.WeakTypeTag[Invariant.type]].tpe.typeSymbol
-    val convert = invariantObject.info.decls.find(_.name.toString == "convert")
+    val convert = typeOf[Invariant.type].decls.find(_.name.toString == "convert")
     if (convert.contains(foundImplicit.symbol)) abortExpansion("trivial wrap - ambiguities")
 
     c.Expr[Ask[F, A]](q"$foundImplicit.value")
