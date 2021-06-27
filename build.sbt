@@ -35,7 +35,6 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(libraryDependencies ++= List(
     "com.chuusai" %%% "shapeless" % "2.3.3",
     "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
-    "org.scala-lang" % "scala-compiler" % scalaVersion.value % "provided",
   ))
 
 lazy val effects = crossProject(JSPlatform, JVMPlatform)

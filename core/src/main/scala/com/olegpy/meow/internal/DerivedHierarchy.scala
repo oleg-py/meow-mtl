@@ -68,6 +68,9 @@ private[meow] object DerivedHierarchy {
     // see `AskOptics.Invariant.deriveInvariantAsk` for required implicits
     implicit def deriveAsk[F[_], A]: Ask[F, A] = macro Macros.deriveAsk[F, A]
 
+    // this doesn't work despite seemingly doing the same thing as the macro
+    // implicit def deriveAsk[F[_], A](implicit ev: AskOptics.Invariant[F, A]): Ask[F, A] = ev.value
+
     implicit def deriveApplicativeError[F[_], S, A](
       implicit
       isAbstractF: IsAbstract[F],
