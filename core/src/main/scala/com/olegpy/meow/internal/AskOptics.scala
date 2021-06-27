@@ -27,8 +27,7 @@ object AskOptics {
       implicit
       isAbstractF: IsAbstract[F],
       parent: AskOptics.Invariant[F, S],
-      nes: S <:!< A,
-      neq: S =:!= A,
+      ns: S <:!< A,
       mkLensToType: MkLensToType[S, A]
     ): AskOptics.Invariant[F, A] =
       Invariant(new AskOptics.Applicative(parent.value, mkLensToType()))

@@ -32,7 +32,7 @@ private[meow] object DerivedHierarchy {
       implicit
       isAbstractF: IsAbstract[F],
       parent: Tell[F, S],
-      neq: A <:!< S,
+      ns: A <:!< S,
       mkPrismToType: MkPrismToType[S, A]
     ): Tell[F, A] =
       new TellOptics.Functor(parent, mkPrismToType())
@@ -97,7 +97,7 @@ private[meow] object DerivedHierarchy {
       implicit
       isAbstractF: IsAbstract[F],
       parent: Raise[F, S],
-      neq: A <:!< S,
+      ns: A <:!< S,
       mkPrismToType: MkPrismToType[S, A]
     ): Raise[F, A] =
       new RaiseOptics.Functor(parent, mkPrismToType())
