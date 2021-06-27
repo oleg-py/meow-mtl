@@ -64,14 +64,8 @@ private[meow] object DerivedHierarchy {
   }
 
   trait Priority2 extends Priority3 {
-//    implicit def deriveAsk[F[_], S, A](implicit
-//      isAbstractF: IsAbstract[F],
-//      parent: Ask[F, S],
-//      neq: S =:!= A,
-//      mkLensToType: MkLensToType[S, A]
-//    ): Ask[F, A] =
-//      new AskOptics.Applicative(parent, mkLensToType())
 
+    // see `AskOptics.Invariant.deriveInvariantAsk` for required implicits
     implicit def deriveAsk[F[_], A]: Ask[F, A] = macro Macros.deriveAsk[F, A]
 
     implicit def deriveApplicativeError[F[_], S, A](
