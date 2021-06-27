@@ -48,6 +48,16 @@ object Chaining {
     derives[Long]
   }
 
+  def testAskNotCompile[F[_]](): Unit = {
+    def derives[S](implicit ev: Ask[F, S]): Unit = ()
+
+    implicit val ev1: Ask[F, State] = ???
+    // after uncommenting the line below, this should no longer compile
+//    implicit val ev2: Ask[F, Inner] = ???
+
+    derives[Long]
+  }
+
   case class DbError(text: String)
   sealed trait NetworkError
 
