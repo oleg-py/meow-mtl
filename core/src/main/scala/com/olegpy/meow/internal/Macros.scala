@@ -2,18 +2,16 @@ package com.olegpy.meow.internal
 
 import cats.Id
 import cats.mtl.Ask
-import cats.mtl.Raise
-import cats.mtl.Tell
 import com.olegpy.meow.optics.MkLensToType
-import com.olegpy.meow.optics.MkPrismToType
 
+import java.util.concurrent.atomic.AtomicLong
 import scala.reflect.macros.whitebox
 import scala.reflect.macros.runtime
 import scala.language.experimental.macros
 
 object Macros {
 
-  def deriveTypeclassFromParent[TApl](c: whitebox.Context)(implicit tt: c.WeakTypeTag[TApl]): c.Expr[TApl] = {
+  def deriveAsk[F[_], A](c: whitebox.Context): c.Expr[Ask[F, A]] = {
     import c.universe._
 
     if (c.enclosingMacros.size > 1) abortExpansion("unsupported recursive call")
@@ -30,29 +28,22 @@ object Macros {
 
     val typer = cc.callsiteTyper
 
-    val typeclass = requestedType.typeConstructor
-    val typeclassF = typeclass.typeParams(0)
-    val typeclassE = typeclass.typeParams(1)
+    val ask = requestedType.typeConstructor
+    val askF = ask.typeParams(0)
+    val askE = ask.typeParams(1)
 
-    val opticsTypeConstructor =
-      if (typeclassE.isCovariant)
-        implicitly[c.WeakTypeTag[MkLensToType[Any, Any]]].tpe.typeConstructor.asInstanceOf[global.Type]
-      else if (typeclassE.isContravariant)
-        implicitly[c.WeakTypeTag[MkPrismToType[Any, Any]]].tpe.typeConstructor.asInstanceOf[global.Type]
-      else
-        abortExpansion("type classes with invariant second type param are unsupported")
-
-    val opticsS = opticsTypeConstructor.typeParams(0)
-    val opticsA = opticsTypeConstructor.typeParams(1)
+    val lensTypeConstructor = implicitly[c.WeakTypeTag[MkLensToType[Any, Any]]].tpe.typeConstructor.asInstanceOf[global.Type]
+    val lensS = lensTypeConstructor.typeParams(0)
+    val lensA = lensTypeConstructor.typeParams(1)
 
     val ctx = typer.context.makeImplicit(false)
-    val potentialParentType = typeclass.instantiateTypeParams(List(typeclassF, typeclassE), List(global.WildcardType, global.WildcardType))
+    val potentialParentType = ask.instantiateTypeParams(List(askF, askE), List(global.WildcardType, global.WildcardType))
     val position = c.enclosingPosition.asInstanceOf[global.Position]
 
     val search = new analyzer.ImplicitSearch(cc.macroApplication, potentialParentType, false, ctx, position)
     val potentialParents = search.allImplicits
 
-    var mkOptic: Option[Tree] = None
+    var foundLens: Option[Tree] = None
 
     def isParent(sr: analyzer.SearchResult): Boolean = {
       if (sr.isFailure) return false
@@ -60,65 +51,52 @@ object Macros {
       if (typ.typeArgs.head.normalize != actualF.normalize) return false
 
       val stateType = typ.typeArgs(1)
-      if (stateType.normalize == actualE.normalize) abortExpansion("better implicit in scope") // otherwise ambiguity in 2.12
+      if (stateType.normalize <:< actualE.normalize) abortExpansion("covered by subtyping")
       if (!canBeFocused(stateType)) return false
 
       true
     }
 
     def canBeFocused(stateType: global.Type): Boolean = {
-      val lensType = opticsTypeConstructor.instantiateTypeParams(List(opticsS, opticsA), List(stateType, actualE)).asInstanceOf[c.Type]
+      val lensType = lensTypeConstructor.instantiateTypeParams(List(lensS, lensA), List(stateType, actualE)).asInstanceOf[c.Type]
 
-      val inferredOptic = c.inferImplicitValue(lensType)
-      if (inferredOptic.isEmpty) return false
+      val inferredLens = c.inferImplicitValue(lensType)
+      if (inferredLens.isEmpty) return false
 
-      mkOptic = Some(inferredOptic)
+      foundLens = Some(inferredLens)
 
       true
     }
 
-    // TODO: this is technically wrong, because if we found more than one we should emit ambiguous implicit error or sth
+    // TODO: this is technically wrong, because if we found more than one we should emit ambiguous implicit error or sth... maybe?
+    //  I don't know if we would have to replicate the logic that the compiler uses for prioritization and disambiguation
+    // IDEA: maybe extend ImplicitSearch and change its behaviour so it performs our checks and then just use `ImplicitSearch#bestImplicit`
     val parent = potentialParents find isParent
 
     if (parent.isEmpty) abortExpansion("did not find a suitable parent type")
 
     val parentTree = parent.get.tree.asInstanceOf[c.Tree]
     val parentE = parentTree.tpe.typeArgs(1).asInstanceOf[global.Type]
-    val optics = mkOptic.get
-    val typeclassImpl = toImpl(cc)(typeclass, actualF, parentE, actualE).asInstanceOf[c.Type]
+    val lens = foundLens.get
+    val askImplCons = implicitly[cc.WeakTypeTag[AskOptics.Applicative[Id, Unit, Unit]]].tpe.typeConstructor
+    val askImpl = askImplCons
+      .instantiateTypeParams(askImplCons.typeParams, List(actualF, parentE, actualE))
+      .asInstanceOf[c.Type]
 
-    val tree = q"""
-      new $typeclassImpl($parentTree, $optics())
-    """
-
-    val possibleErr =
-      try c.typecheck(tree)
-      catch { case e => e }
-
-    def keepVar[T](t: T) = ()
-    keepVar(possibleErr)
-
-    val expr = c.Expr[TApl](tree)
-
-    expr
-  }
-
-  private def toImpl(c: runtime.Context)(typeclass: c.Type, F: c.Type, E: c.Type, A: c.Type): c.Type = {
-    val Ask = implicitly[c.WeakTypeTag[Ask[Id, Unit]]].tpe.typeConstructor
-    val Tell = implicitly[c.WeakTypeTag[Tell[Id, Unit]]].tpe.typeConstructor
-    val Raise = implicitly[c.WeakTypeTag[Raise[Id, Unit]]].tpe.typeConstructor
-
-    val impl = typeclass match {
-      case Ask   => implicitly[c.WeakTypeTag[AskOptics.Applicative[Id, Unit, Unit]]].tpe
-      case Tell  => implicitly[c.WeakTypeTag[TellOptics.Functor[Id, Unit, Unit]]].tpe
-      case Raise => implicitly[c.WeakTypeTag[RaiseOptics.Functor[Id, Unit, Unit]]].tpe
-      case t     => println(s"unsupported typeclass $t"); abortExpansion(s"unsupported typeclass $t")
+    import scala.util.Try
+    if (Try(System.getProperty("meow-mtl.loud-ask-derivation").toBoolean).getOrElse(false)) {
+      // the counter is so the compiler doesn't dedup the second message, because that's confusing
+      val invocationNum = invocationCounter.getAndIncrement()
+      c.info(c.enclosingPosition, s"Deriving Ask from parent instance ($invocationNum)...", true)
+      c.info(parentTree.symbol.pos, s"... parent instance ($invocationNum) located here", true)
     }
 
-    val cons = impl.typeConstructor
-
-    cons.instantiateTypeParams(cons.typeParams, List(F, E, A))
+    c.Expr[Ask[F, A]](q"""
+      new $askImpl($parentTree, $lens())
+    """)
   }
+
+  val invocationCounter = new AtomicLong(0)
 
   // I don't think this is ever seen by the user when compiling, just here for code clarity...
   private def abortExpansion(message: String = "<no message>"): Nothing = throw new RuntimeException(s"aborting macro expansion: $message")

@@ -72,7 +72,7 @@ private[meow] object DerivedHierarchy {
 //    ): Ask[F, A] =
 //      new AskOptics.Applicative(parent, mkLensToType())
 
-    implicit def deriveAsk[F[_], A]: Ask[F, A] = macro Macros.deriveTypeclassFromParent[Ask[F, A]]
+    implicit def deriveAsk[F[_], A]: Ask[F, A] = macro Macros.deriveAsk[F, A]
 
     implicit def deriveApplicativeError[F[_], S, A](
       implicit
