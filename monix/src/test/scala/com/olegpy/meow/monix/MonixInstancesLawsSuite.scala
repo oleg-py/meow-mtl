@@ -54,18 +54,18 @@ object MonixInstancesLawsSuite extends SimpleTestSuite with Checkers {
 
   checkAll("TaskLocal.runLocal") { implicit ctx =>
     unsafeTaskLocal().runLocal(ev =>
-      ApplicativeLocalTests(ev).applicativeLocal[Int, String])
+      LocalTests(ev).local[Int, String])
   }
 
   checkAll("TaskLocal.runState") { implicit ctx =>
     unsafeTaskLocal().runState(ev =>
-      MonadStateTests(ev).monadState[Int]
+      StatefulTests(ev).stateful[Int]
     )
   }
 
   checkAll("TaskLocal.runTell") { implicit ctx =>
     unsafeTaskLocal().runTell(ev =>
-      FunctorTellTests(ev).functorTell[Int]
+      TellTests(ev).tell[Int]
     )
   }
 }

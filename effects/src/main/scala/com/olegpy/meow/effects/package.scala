@@ -13,7 +13,7 @@ package object effects {
      * would be a result of function passed to [[runState]].
      *
      * {{{
-     *    def getAndIncrement[F[_]: Apply](implicit MS: MonadState[F, Int]) =
+     *    def getAndIncrement[F[_]: Apply](implicit MS: Stateful[F, Int]) =
      *      MS.get <* MS.modify(_ + 1)
      *
      *
@@ -26,17 +26,17 @@ package object effects {
      *    } yield (out, state) == ("Done", 3)
      * }}}
      */
-    def runState[B](f: MonadState[F, A] => B)(implicit F: Monad[F]): B =
-      f(new RefMonadState(self))
+    def runState[B](f: Stateful[F, A] => B)(implicit F: Monad[F]): B =
+      f(new RefStateful(self))
 
     /**
-     * Directly return an instance for `MonadState` that is based on this `Ref`
+     * Directly return an instance for `Stateful` that is based on this `Ref`
      *
      * Returned instance would use `get`/`set` methods of this `Ref` to manipulate state
      *
      * @see [[runState]] for potentially more convenient usage
      */
-    def stateInstance(implicit F: Monad[F]): MonadState[F, A] =
+    def stateInstance(implicit F: Monad[F]): Stateful[F, A] =
       runState(identity)
 
     /**
@@ -49,9 +49,9 @@ package object effects {
      * {{{
      *   case class RequestId(text: String)
      *
-     *   def greet[F[_]: Sync: ApplicativeAsk[?[_], RequestId]](name: String): F[String] =
+     *   def greet[F[_]: Sync: Ask[?[_], RequestId]](name: String): F[String] =
      *     for {
-     *       rId <- ApplicativeAsk.askF[F]()
+     *       rId <- Ask.askF[F]()
      *       _   <- Sync[F].delay(println(s"Handling request \$rId"))
      *     } yield s"Hello, \$name"
      *
@@ -65,17 +65,17 @@ package object effects {
      *   } yield res
      * }}}
      */
-    def runAsk[B](f: ApplicativeAsk[F, A] => B)(implicit F: Applicative[F]): B =
-      f(new RefApplicativeAsk(self))
+    def runAsk[B](f: Ask[F, A] => B)(implicit F: Applicative[F]): B =
+      f(new RefAsk(self))
 
     /**
-     * Directly return an instance for `ApplicativeAsk` that is based on this `Ref`
+     * Directly return an instance for `Ask` that is based on this `Ref`
      *
      * Returned instance would use `get` method of this `Ref` to provide a value
      *
      * @see [[runAsk]] for potentially more convenient usage
      */
-    def askInstance(implicit F: Applicative[F]): ApplicativeAsk[F, A] =
+    def askInstance(implicit F: Applicative[F]): Ask[F, A] =
       runAsk(identity)
 
     /**
@@ -86,7 +86,7 @@ package object effects {
      * `Writer` monad, initial (zero) is not required.
      *
      * {{{
-     *   def generateUser[F[_]: Sync: FunctorTell[?[_], String]](login: String) =
+     *   def generateUser[F[_]: Sync: Tell[?[_], String]](login: String) =
      *     for {
      *       _   <- tellF[F](s"Starting key generation for \$login")
      *       pwd <- IO(Random.alphanumeric.take(16).mkString)
@@ -108,18 +108,18 @@ package object effects {
      *      on each `tell`
      *
      */
-    def runTell[B](f: FunctorTell[F, A] => B)(implicit F: Functor[F], A: Semigroup[A]): B =
-      f(new RefFunctorTell(self))
+    def runTell[B](f: Tell[F, A] => B)(implicit F: Functor[F], A: Semigroup[A]): B =
+      f(new RefTell(self))
 
     /**
-     * Directly return an instance for `FunctorTell` that is based on this `Ref`
+     * Directly return an instance for `Tell` that is based on this `Ref`
      *
      * Returned instance would use `modify` method of this `Ref` and a `Semigroup`
      * to accumulate results
      *
      * @see [[runTell]] for potentially more convenient usage
      */
-    def tellInstance(implicit F: Functor[F], A: Semigroup[A]): FunctorTell[F, A] =
+    def tellInstance(implicit F: Functor[F], A: Semigroup[A]): Tell[F, A] =
       runTell(identity)
   }
 }

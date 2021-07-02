@@ -33,7 +33,8 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
   .settings(name := "meow-mtl-core")
   .settings(commonSettings)
   .settings(libraryDependencies ++= List(
-    "com.chuusai" %%% "shapeless" % "2.3.3"
+    "com.chuusai" %%% "shapeless" % "2.3.3",
+    "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
   ))
 
 lazy val effects = crossProject(JSPlatform, JVMPlatform)
@@ -41,8 +42,8 @@ lazy val effects = crossProject(JSPlatform, JVMPlatform)
   .settings(name := "meow-mtl-effects")
   .settings(commonSettings)
   .settings(libraryDependencies ++= List(
-    "org.typelevel" %%% "cats-effect"   % "2.1.4",
-    "org.typelevel" %%% "cats-effect-laws" % "2.1.4" % Test,
+    "org.typelevel" %%% "cats-effect" % "2.2.0",
+    "org.typelevel" %%% "cats-effect-laws" % "2.2.0" % Test
   ))
 
 lazy val monix = crossProject(JSPlatform, JVMPlatform)
@@ -51,7 +52,7 @@ lazy val monix = crossProject(JSPlatform, JVMPlatform)
   .settings(commonSettings: _*)
   .settings(libraryDependencies ++= List(
     "io.monix" %%% "monix-eval" % "3.2.2",
-    "org.typelevel" %%% "cats-effect-laws" % "2.1.4" % Test,
+    "org.typelevel" %%% "cats-effect-laws" % "2.2.0" % Test
   ))
 
 def commonSettings = List(
@@ -60,11 +61,11 @@ def commonSettings = List(
   homepage := Some(url("http://github.com/oleg-py/meow-mtl")),
 
   libraryDependencies ++= Seq(
-    "org.typelevel" %%% "cats-mtl-core" % "0.7.1",
-    "org.typelevel" %%% "cats-laws"     % "2.1.0" % Test,
+    "org.typelevel" %%% "cats-mtl"      % "1.0.0",
+    "org.typelevel" %%% "cats-laws"     % "2.2.0" % Test,
     "io.monix"      %%% "minitest"      % "2.8.2" % Test,
     "io.monix"      %%% "minitest-laws" % "2.8.2" % Test,
-    "org.typelevel" %%% "cats-mtl-laws" % "0.7.1" % Test,
+    "org.typelevel" %%% "cats-mtl-laws" % "1.0.0" % Test
   ),
 
   addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full),

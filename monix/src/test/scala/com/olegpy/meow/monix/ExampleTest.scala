@@ -3,17 +3,17 @@ package com.olegpy.meow.monix
 import scala.util.Random
 
 import cats.Monad
-import cats.mtl.{ApplicativeAsk, ApplicativeLocal}
+import cats.mtl.{Ask, Local}
 import cats.implicits._
 import _root_.monix.eval.{Task, TaskLocal}
 
 // Compile-time test for doc example
 object ExampleTest {
-  def service[F[_]: Monad](greeting: String, print: String => F[Unit])(implicit ev: ApplicativeAsk[F, String]): F[Unit] =
+  def service[F[_]: Monad](greeting: String, print: String => F[Unit])(implicit ev: Ask[F, String]): F[Unit] =
     ev.ask.map(name => s"$greeting $name") >>= print
 
-  def middleware[F[_]: Monad, A](getName: F[String])(service: F[Unit])(implicit ev: ApplicativeLocal[F, String]) =
-    getName.flatMap(n => ev.scope(n)(service))
+  def middleware[F[_]: Monad, A](getName: F[String])(service: F[Unit])(implicit ev: Local[F, String]) =
+    getName.flatMap(n => ev.scope(service)(n))
 
   // Can be looking up something in external system, or random ID
   val getName = Task(if (Random.nextBoolean()) "Oleg" else "Olga")

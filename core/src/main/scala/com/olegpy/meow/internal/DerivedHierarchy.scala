@@ -1,62 +1,78 @@
 package com.olegpy.meow.internal
 
 import cats.mtl._
-import cats.{ApplicativeError, MonadError}
-import com.olegpy.meow.optics.{MkLensToType, MkPrismToType}
-import shapeless.{<:!<, =:!=, Coproduct, Refute, Typeable}
+import cats.ApplicativeError
+import cats.MonadError
+import com.olegpy.meow.optics.MkLensToType
+import com.olegpy.meow.optics.MkPrismToType
+import shapeless.<:!<
+import shapeless.=:!=
+import shapeless.Coproduct
+import shapeless.Refute
+import shapeless.Typeable
+
+import scala.language.experimental.macros
 
 private[meow] trait DerivedHierarchy extends DerivedHierarchy.Priority0
 
 private[meow] object DerivedHierarchy {
+
   trait Priority0 extends Priority1 {
-    implicit def deriveMonadState[F[_], S, A](implicit
+
+    implicit def deriveStateful[F[_], S, A](
+      implicit
       isAbstractF: IsAbstract[F],
-      parent: MonadState[F, S],
+      parent: Stateful[F, S],
       neq: S =:!= A,
       mkLensToType: MkLensToType[S, A]
-    ): MonadState[F, A] =
+    ): Stateful[F, A] =
       new StateOptics.Monad(parent, mkLensToType())
 
-    implicit def deriveFunctorTell[F[_], S, A](implicit
+    implicit def deriveTell[F[_], S, A](
+      implicit
       isAbstractF: IsAbstract[F],
-      parent: FunctorTell[F, S],
-      neq: S =:!= A,
+      parent: Tell[F, S],
+      ns: A <:!< S,
       mkPrismToType: MkPrismToType[S, A]
-    ): FunctorTell[F, A] =
+    ): Tell[F, A] =
       new TellOptics.Functor(parent, mkPrismToType())
 
     // A version for concrete F[_]s, but limited to Throwables
-    implicit def deriveMonadErrorFromThrowable[F[_], E <: Throwable, A](implicit
+    implicit def deriveMonadErrorFromThrowable[F[_], E <: Throwable, A](
+      implicit
       nab: Refute[IsAbstract[F]],
       parent: MonadError[F, Throwable],
       neq: Throwable =:!= E,
       nc: E <:!< Coproduct,
       typ: Typeable[E]
-    ): MonadError[F, E] = {
+    ): MonadError[F, E] =
       deriveMonadError[F, Throwable, E]
-    }
+
   }
 
   trait Priority1 extends Priority2 {
-    implicit def deriveMonadError[F[_], S, A](implicit
+
+    implicit def deriveMonadError[F[_], S, A](
+      implicit
       isAbstractF: IsAbstract[F],
       parent: MonadError[F, S],
       neq: S =:!= A,
       mkPrismToType: MkPrismToType[S, A]
     ): MonadError[F, A] =
       new RaiseOptics.Monad(parent, mkPrismToType())
+
   }
 
   trait Priority2 extends Priority3 {
-    implicit def deriveApplicativeAsk[F[_], S, A](implicit
-      isAbstractF: IsAbstract[F],
-      parent: ApplicativeAsk[F, S],
-      neq: S =:!= A,
-      mkLensToType: MkLensToType[S, A]
-    ): ApplicativeAsk[F, A] =
-      new AskOptics.Applicative(parent, mkLensToType())
 
-    implicit def deriveApplicativeError[F[_], S, A](implicit
+    // see `AskOptics.Invariant.deriveInvariantAsk` for required implicits
+    implicit def deriveAsk[F[_], A]: Ask[F, A] = macro Macros.deriveAsk[F, A]
+
+    // this doesn't work despite seemingly doing the same thing as the macro
+    // implicit def deriveAsk[F[_], A](implicit ev: AskOptics.Invariant[F, A]): Ask[F, A] = ev.value
+
+    implicit def deriveApplicativeError[F[_], S, A](
+      implicit
       isAbstractF: IsAbstract[F],
       parent: ApplicativeError[F, S],
       neq: S =:!= A,
@@ -64,32 +80,41 @@ private[meow] object DerivedHierarchy {
     ): ApplicativeError[F, A] =
       new RaiseOptics.Applicative(parent, mkPrismToType())
 
-    implicit def deriveApplicativeHandle[F[_], S, A](implicit
+    implicit def deriveHandle[F[_], S, A](
+      implicit
       isAbstractF: IsAbstract[F],
-      parent: ApplicativeHandle[F, S],
+      parent: Handle[F, S],
       neq: S =:!= A,
       mkPrismToType: MkPrismToType[S, A]
-    ): ApplicativeHandle[F, A] =
+    ): Handle[F, A] =
       new HandleOptics.Applicative(parent, mkPrismToType())
+
   }
 
   trait Priority3 extends Priority4 {
-    implicit def deriveFunctorRaise[F[_], S, A](implicit
+
+    implicit def deriveRaise[F[_], S, A](
+      implicit
       isAbstractF: IsAbstract[F],
-      parent: FunctorRaise[F, S],
-      neq: S =:!= A,
+      parent: Raise[F, S],
+      ns: A <:!< S,
       mkPrismToType: MkPrismToType[S, A]
-    ): FunctorRaise[F, A] =
+    ): Raise[F, A] =
       new RaiseOptics.Functor(parent, mkPrismToType())
+
   }
 
   trait Priority4 {
-    implicit def deriveApplicativeLocal[F[_], S, A](implicit
+
+    implicit def deriveLocal[F[_], S, A](
+      implicit
       isAbstractF: IsAbstract[F],
-      parent: ApplicativeLocal[F, S],
+      parent: Local[F, S],
       neq: S =:!= A,
       mkLensToType: MkLensToType[S, A]
-    ): ApplicativeLocal[F, A] =
+    ): Local[F, A] =
       new LocalOptics.Applicative(parent, mkLensToType())
+
   }
+
 }
