@@ -7,16 +7,16 @@ A catpanion library for [cats-mtl] and [cats-effect] providing:
 - MTL instances for cats-effect compatible datatypes (e.g. `IO`) and monix TaskLocal
 - Conflict-free implicits for sub-instances (e.g. `Stateful` => `Monad`)
 
-Available for Scala 2.11, 2.12 and 2.13, for Scala JVM and Scala.JS (0.6)
+Available for Scala 2.12 and 2.13, for Scala JVM and Scala.JS (1.x)
 
 ```scala
 // Use %%% for scala.js or cross projects
 // Classy lenses derivation (requires shapeless)
-libraryDependencies += "com.olegpy" %% "meow-mtl-core" % "0.4.0"
+libraryDependencies += "com.olegpy" %% "meow-mtl-core" % "0.5.0"
 // MTL instances for cats-effect Ref and effectful functions
-libraryDependencies += "com.olegpy" %% "meow-mtl-effects" % "0.4.0"
+libraryDependencies += "com.olegpy" %% "meow-mtl-effects" % "0.5.0"
 // MTL instances for TaskLocal
-libraryDependencies += "com.olegpy" %% "meow-mtl-monix" % "0.4.0"
+libraryDependencies += "com.olegpy" %% "meow-mtl-monix" % "0.5.0"
 ```
 
 
