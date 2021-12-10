@@ -44,7 +44,7 @@ lazy val effects = crossProject(JSPlatform, JVMPlatform)
   .settings(libraryDependencies ++= List(
     "org.typelevel" %%% "cats-effect" % "3.3.0",
     "org.typelevel" %%% "cats-effect-laws" % "3.3.0" % Test,
-    "org.typelevel" %% "cats-effect-testkit" % "3.3.0" % Test
+    "org.typelevel" %%% "cats-effect-testkit" % "3.3.0" % Test
   ))
 
 lazy val monix = crossProject(JSPlatform, JVMPlatform)
