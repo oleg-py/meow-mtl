@@ -1,47 +1,48 @@
 package com.olegpy.meow.effects
 
 import cats.effect.IO
-import cats.effect.concurrent.Ref
-import cats.effect.laws.util.TestContext
+import cats.effect.kernel.Ref
+import cats.effect.testkit.TestContext
+import cats.effect.testkit.TestInstances
 import cats.implicits._
-import cats.effect.laws.discipline.arbitrary._
-import cats.effect.laws.util.TestInstances._
 import cats.mtl.laws.discipline._
 import minitest.SimpleTestSuite
 import minitest.laws.Checkers
 import org.typelevel.discipline.Laws
+
 import scala.concurrent.duration._
 
-object EffectInstancesLawsSuite extends SimpleTestSuite with Checkers {
-  private def checkAll(name: String)(ruleSet: TestContext => Laws#RuleSet) = {
-    implicit val ctx = TestContext()
+object EffectInstancesLawsSuite extends SimpleTestSuite with Checkers with TestInstances {
 
-    for ((id, prop) <- ruleSet(ctx).all.properties)
+  private def checkAll(name: String)(ruleSet: Ticker => Laws#RuleSet) = {
+    implicit val ticker = Ticker(TestContext())
+
+    for ((id, prop) <- ruleSet(ticker).all.properties)
       test(name + "." + id) {
-        ctx.tick(1.day)
+        ticker.ctx.advanceAndTick(1.day)
         check(prop)
       }
   }
 
-  checkAll("Ref.runAsk") { implicit ctx =>
+  checkAll("Ref.runAsk") { implicit ticker =>
     Ref.unsafe[IO, Int](0).runAsk(ev =>
       AskTests(ev).ask[Int]
     )
   }
 
-  checkAll("Ref.runState") { implicit ctx =>
+  checkAll("Ref.runState") { implicit ticker =>
     Ref.unsafe[IO, Int](0).runState(ev =>
       StatefulTests(ev).stateful[Int]
     )
   }
 
-  checkAll("Ref.runTell") { implicit ctx =>
+  checkAll("Ref.runTell") { implicit ticker =>
     Ref.unsafe[IO, Int](0).runTell(ev =>
       TellTests(ev).tell[Int]
     )
   }
 
-  checkAll("Consumer.runTell") { implicit ctx =>
+  checkAll("Consumer.runTell") { implicit ticker =>
     case object DummyErr extends Throwable
     def fun(x: Int) =
       if (x == 1) IO.raiseError[Unit](DummyErr)

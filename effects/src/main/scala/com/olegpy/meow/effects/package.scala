@@ -1,6 +1,6 @@
 package com.olegpy.meow
 
-import cats.effect.concurrent.Ref
+import cats.effect.kernel.Ref
 import cats.mtl._
 import cats.{Applicative, Functor, Monad, Semigroup}
 import com.olegpy.meow.internal.CatsEffectMtlInstances._
