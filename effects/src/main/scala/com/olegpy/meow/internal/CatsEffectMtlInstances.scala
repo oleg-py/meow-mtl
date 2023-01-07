@@ -1,6 +1,6 @@
 package com.olegpy.meow.internal
 
-import cats.effect.concurrent.Ref
+import cats.effect.kernel.Ref
 import cats.kernel.Semigroup
 import cats.mtl._
 import cats.syntax.functor._
